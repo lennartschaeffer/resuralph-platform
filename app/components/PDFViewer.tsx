@@ -1,98 +1,137 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import * as pdfjsLib from "pdfjs-dist";
-import type { PDFDocumentProxy } from "pdfjs-dist";
+import { Document, Page, pdfjs } from "react-pdf";
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+import "react-pdf/dist/Page/AnnotationLayer.css";
+import "react-pdf/dist/Page/TextLayer.css";
+
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url,
+).toString();
+
+const MIN_SCALE = 0.25;
+const MAX_SCALE = 5.0;
+const ZOOM_STEP = 0.25;
+const ZOOM_PRESETS = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 3.0];
+
+type FitMode = "none" | "fit-width" | "fit-page";
 
 interface PDFViewerProps {
   pdfUrl: string;
 }
 
 export default function PDFViewer({ pdfUrl }: PDFViewerProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [pdfDocument, setPdfDocument] = useState<PDFDocumentProxy | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
-  const [scale] = useState(1.5);
+  const [scale, setScale] = useState(1.5);
+  const [fitMode, setFitMode] = useState<FitMode>("none");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const renderTaskRef = useRef<pdfjsLib.RenderTask | null>(null);
 
-  // Load PDF document
-  useEffect(() => {
-    let cancelled = false;
+  // Store the base viewport (scale=1) for fit calculations
+  const baseViewportRef = useRef<{ width: number; height: number } | null>(
+    null,
+  );
 
-    async function loadDocument() {
-      setIsLoading(true);
+  // --- Document & Page callbacks ---
+  const handleDocumentLoadSuccess = useCallback(
+    ({ numPages }: { numPages: number }) => {
+      setTotalPages(numPages);
+      setCurrentPage(1);
+      setIsLoading(false);
       setError(null);
+    },
+    [],
+  );
 
-      try {
-        const loadingTask = pdfjsLib.getDocument(pdfUrl);
-        const doc = await loadingTask.promise;
+  const handleDocumentLoadError = useCallback(() => {
+    setError("Failed to load PDF document.");
+    setIsLoading(false);
+  }, []);
 
-        if (cancelled) return;
+  const handlePageLoadSuccess = useCallback(
+    (page: { originalWidth: number; originalHeight: number }) => {
+      baseViewportRef.current = {
+        width: page.originalWidth,
+        height: page.originalHeight,
+      };
+    },
+    [],
+  );
 
-        setPdfDocument(doc);
-        setTotalPages(doc.numPages);
-        setCurrentPage(1);
-      } catch (err) {
-        if (cancelled) return;
-        console.error("Failed to load PDF:", err);
-        setError("Failed to load PDF document.");
-      } finally {
-        if (!cancelled) setIsLoading(false);
+  // Calculate fit scale based on container dimensions and page dimensions
+  const calculateFitScale = useCallback((mode: FitMode) => {
+    if (mode === "none" || !containerRef.current || !baseViewportRef.current) {
+      return null;
+    }
+
+    const container = containerRef.current;
+    const padding = 32; // 16px padding on each side
+    const availableWidth = container.clientWidth - padding;
+    const availableHeight = container.clientHeight - padding;
+    const { width: pageWidth, height: pageHeight } = baseViewportRef.current;
+
+    if (mode === "fit-width") {
+      return Math.min(availableWidth / pageWidth, MAX_SCALE);
+    }
+
+    // fit-page: fit both dimensions
+    const scaleX = availableWidth / pageWidth;
+    const scaleY = availableHeight / pageHeight;
+    return Math.min(scaleX, scaleY, MAX_SCALE);
+  }, []);
+
+  // Recalculate fit scale on window resize
+  useEffect(() => {
+    if (fitMode === "none") return;
+
+    function handleResize() {
+      const newScale = calculateFitScale(fitMode);
+      if (newScale !== null) {
+        setScale(newScale);
       }
     }
 
-    loadDocument();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [fitMode, calculateFitScale]);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [pdfUrl]);
+  // --- Zoom handlers ---
+  function zoomIn() {
+    setFitMode("none");
+    setScale((prev) => Math.min(prev + ZOOM_STEP, MAX_SCALE));
+  }
 
-  // Render the current page
-  const renderPage = useCallback(
-    async (pageNum: number) => {
-      if (!pdfDocument || !canvasRef.current) return;
+  function zoomOut() {
+    setFitMode("none");
+    setScale((prev) => Math.max(prev - ZOOM_STEP, MIN_SCALE));
+  }
 
-      // Cancel any in-progress render
-      if (renderTaskRef.current) {
-        renderTaskRef.current.cancel();
-        renderTaskRef.current = null;
-      }
+  function setZoomPreset(value: number) {
+    setFitMode("none");
+    setScale(value);
+  }
 
-      try {
-        const page = await pdfDocument.getPage(pageNum);
-        const viewport = page.getViewport({ scale });
+  function fitToWidth() {
+    setFitMode("fit-width");
+    const newScale = calculateFitScale("fit-width");
+    if (newScale !== null) {
+      setScale(newScale);
+    }
+  }
 
-        const canvas = canvasRef.current;
+  function fitToPage() {
+    setFitMode("fit-page");
+    const newScale = calculateFitScale("fit-page");
+    if (newScale !== null) {
+      setScale(newScale);
+    }
+  }
 
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-
-        const renderTask = page.render({
-          canvas,
-          viewport,
-        });
-
-        renderTaskRef.current = renderTask;
-        await renderTask.promise;
-        renderTaskRef.current = null;
-      } catch (err) {
-        if (err instanceof pdfjsLib.RenderingCancelledException) return;
-        console.error("Failed to render page:", err);
-      }
-    },
-    [pdfDocument, scale]
-  );
-
-  useEffect(() => {
-    renderPage(currentPage);
-  }, [currentPage, renderPage]);
-
+  // --- Page navigation ---
   function goToPreviousPage() {
     setCurrentPage((prev) => Math.max(1, prev - 1));
   }
@@ -121,10 +160,13 @@ export default function PDFViewer({ pdfUrl }: PDFViewerProps) {
     );
   }
 
+  const zoomPercentage = Math.round(scale * 100);
+
   return (
     <div className="flex flex-col h-full">
       {/* Viewer Controls */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 bg-gray-50 shrink-0">
+        {/* Navigation Controls */}
         <div className="flex items-center gap-2">
           <button
             onClick={goToPreviousPage}
@@ -140,35 +182,114 @@ export default function PDFViewer({ pdfUrl }: PDFViewerProps) {
           >
             Next
           </button>
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <span>Page</span>
+            <input
+              type="number"
+              min={1}
+              max={totalPages}
+              value={currentPage}
+              onChange={handlePageInputChange}
+              disabled={isLoading || totalPages === 0}
+              className="w-12 px-1.5 py-1 text-center text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <span>of {totalPages}</span>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <span>Page</span>
-          <input
-            type="number"
-            min={1}
-            max={totalPages}
-            value={currentPage}
-            onChange={handlePageInputChange}
-            disabled={isLoading || totalPages === 0}
-            className="w-12 px-1.5 py-1 text-center text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <span>of {totalPages}</span>
+        {/* Zoom Controls */}
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={zoomOut}
+            disabled={scale <= MIN_SCALE || isLoading}
+            className="w-8 h-8 flex items-center justify-center text-sm font-medium rounded-md border border-gray-300 bg-gray-900 hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            title="Zoom out (-)"
+          >
+            &minus;
+          </button>
+
+          <select
+            value={ZOOM_PRESETS.includes(scale) ? scale.toString() : "custom"}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val !== "custom") {
+                setZoomPreset(parseFloat(val));
+              }
+            }}
+            className="h-8 px-1.5 text-sm border border-gray-300 rounded-md bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            {!ZOOM_PRESETS.includes(scale) && (
+              <option value="custom">{zoomPercentage}%</option>
+            )}
+            {ZOOM_PRESETS.map((preset) => (
+              <option key={preset} value={preset.toString()}>
+                {Math.round(preset * 100)}%
+              </option>
+            ))}
+          </select>
+
+          <button
+            onClick={zoomIn}
+            disabled={scale >= MAX_SCALE || isLoading}
+            className="w-8 h-8 flex items-center justify-center text-sm font-medium rounded-md border border-gray-300 bg-gray-900 hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            title="Zoom in (+)"
+          >
+            +
+          </button>
+
+          <div className="w-px h-6 bg-gray-300 mx-1" />
+
+          <button
+            onClick={fitToWidth}
+            disabled={isLoading}
+            className={`px-2.5 py-1.5 text-xs font-medium rounded-md border transition-colors ${
+              fitMode === "fit-width"
+                ? "border-blue-500 bg-blue-50 text-blue-700"
+                : "border-gray-300 bg-white hover:bg-gray-100 text-gray-700"
+            } disabled:opacity-40 disabled:cursor-not-allowed`}
+            title="Fit to width"
+          >
+            Fit Width
+          </button>
+          <button
+            onClick={fitToPage}
+            disabled={isLoading}
+            className={`px-2.5 py-1.5 text-xs font-medium rounded-md border transition-colors ${
+              fitMode === "fit-page"
+                ? "border-blue-500 bg-blue-50 text-blue-700"
+                : "border-gray-300 bg-white hover:bg-gray-100 text-gray-700"
+            } disabled:opacity-40 disabled:cursor-not-allowed`}
+            title="Fit to page"
+          >
+            Fit Page
+          </button>
         </div>
       </div>
 
-      {/* Canvas Area */}
-      <div className="flex-1 overflow-auto bg-gray-100 flex justify-center p-4">
-        {isLoading ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-gray-500 text-sm">Loading PDF...</div>
-          </div>
-        ) : (
-          <canvas
-            ref={canvasRef}
-            className="shadow-lg bg-white"
+      {/* PDF Viewer Area */}
+      <div
+        ref={containerRef}
+        className={`flex-1 overflow-auto bg-gray-100 flex justify-center p-4 `}
+      >
+        <Document
+          file={pdfUrl}
+          onLoadSuccess={handleDocumentLoadSuccess}
+          onLoadError={handleDocumentLoadError}
+          loading={
+            <div className="flex items-center justify-center h-full">
+              <div className="text-gray-500 text-sm">Loading PDF...</div>
+            </div>
+          }
+        >
+          <Page
+            pageNumber={currentPage}
+            scale={scale}
+            onLoadSuccess={handlePageLoadSuccess}
+            renderTextLayer={true}
+            renderAnnotationLayer={true}
+            className="shadow-lg"
           />
-        )}
+        </Document>
       </div>
     </div>
   );
