@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import AnnotationOverlay from "./AnnotationOverlay";
+import AnnotationSidebar from "./AnnotationSidebar";
 import { Annotation } from "@/app/types/annotation";
 import { mockAnnotations } from "@/app/data/mockAnnotations";
 
@@ -37,6 +38,7 @@ export default function PDFViewer({ pdfUrl }: PDFViewerProps) {
   const [activeAnnotationId, setActiveAnnotationId] = useState<string | null>(
     null,
   );
+  const [selectedText, setSelectedText] = useState<string | null>(null);
 
   // Store the base viewport (scale=1) for fit calculations
   const baseViewportRef = useRef<{ width: number; height: number } | null>(
@@ -170,9 +172,11 @@ export default function PDFViewer({ pdfUrl }: PDFViewerProps) {
   const zoomPercentage = Math.round(scale * 100);
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Viewer Controls */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 bg-gray-50 shrink-0">
+    <div className="flex flex-col lg:flex-row h-full">
+      {/* PDF Viewer Section */}
+      <div className="flex flex-col flex-1 h-full lg:h-auto">
+        {/* Viewer Controls */}
+        <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 bg-gray-50 shrink-0">
         {/* Navigation Controls */}
         <div className="flex items-center gap-2">
           <button
@@ -297,18 +301,34 @@ export default function PDFViewer({ pdfUrl }: PDFViewerProps) {
               renderAnnotationLayer={true}
               className="shadow-lg"
             />
-            <AnnotationOverlay
-              annotations={annotations}
-              currentPage={currentPage}
-              scale={scale}
-              activeAnnotationId={activeAnnotationId}
-              onAnnotationClick={(id) => {
-                setActiveAnnotationId((prev) => (prev === id ? null : id));
-                console.log("Annotation clicked:", id);
-              }}
-            />
+            <div className="absolute inset-0 z-10 pointer-events-none">
+              <AnnotationOverlay
+                annotations={annotations}
+                currentPage={currentPage}
+                scale={scale}
+                activeAnnotationId={activeAnnotationId}
+                onAnnotationClick={(id) => {
+                  setActiveAnnotationId((prev) => (prev === id ? null : id));
+                  console.log("Annotation clicked:", id);
+                }}
+              />
+            </div>
           </div>
         </Document>
+      </div>
+      </div>
+
+      {/* Annotation Sidebar */}
+      <div className="w-full lg:w-96 h-64 lg:h-full shrink-0">
+        <AnnotationSidebar
+          annotations={annotations}
+          currentPage={currentPage}
+          activeAnnotationId={activeAnnotationId}
+          selectedText={selectedText}
+          onAnnotationClick={(id) => {
+            setActiveAnnotationId((prev) => (prev === id ? null : id));
+          }}
+        />
       </div>
     </div>
   );

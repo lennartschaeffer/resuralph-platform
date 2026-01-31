@@ -17,7 +17,6 @@ export interface Annotation {
   position: AnnotationPosition;
   color: string; // Hex color (e.g., "#ffeb3b")
   priority: "high" | "medium" | "low";
-  tags: string[];
   createdAt: Date;
   creatorId: string;
 }
