@@ -25,9 +25,11 @@ type FitMode = "none" | "fit-width" | "fit-page";
 
 interface PDFViewerProps {
   pdfUrl: string;
+  isAuthenticated?: boolean;
+  onLoginClick?: () => void;
 }
 
-export default function PDFViewer({ pdfUrl }: PDFViewerProps) {
+export default function PDFViewer({ pdfUrl, isAuthenticated = false, onLoginClick }: PDFViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const pageWrapperRef = useRef<HTMLDivElement>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -221,6 +223,17 @@ export default function PDFViewer({ pdfUrl }: PDFViewerProps) {
       <div className="flex flex-col flex-1 h-full lg:h-auto">
         {/* Viewer Controls */}
         <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 bg-gray-50 shrink-0">
+        {/* Auth Controls */}
+        {!isAuthenticated && onLoginClick && (
+          <div className="flex items-center">
+            <button
+              onClick={onLoginClick}
+              className="px-3 py-1.5 text-xs font-medium rounded-md bg-[#5865F2] text-white hover:bg-[#4752C4] transition-colors"
+            >
+              Sign in to annotate
+            </button>
+          </div>
+        )}
         {/* Navigation Controls */}
         <div className="flex items-center gap-2">
           <button
@@ -364,12 +377,14 @@ export default function PDFViewer({ pdfUrl }: PDFViewerProps) {
                 }
               />
             </div>
-            <TextSelectionLayer
-              containerRef={pageWrapperRef}
-              scale={scale}
-              currentPage={currentPage}
-              onSelectionComplete={handleSelectionComplete}
-            />
+            {isAuthenticated && (
+              <TextSelectionLayer
+                containerRef={pageWrapperRef}
+                scale={scale}
+                currentPage={currentPage}
+                onSelectionComplete={handleSelectionComplete}
+              />
+            )}
           </div>
         </Document>
       </div>
@@ -381,12 +396,14 @@ export default function PDFViewer({ pdfUrl }: PDFViewerProps) {
           annotations={annotations}
           currentPage={currentPage}
           activeAnnotationId={activeAnnotationId}
-          pendingSelection={pendingSelection}
+          pendingSelection={isAuthenticated ? pendingSelection : null}
           onAnnotationClick={(id) => {
             setActiveAnnotationId((prev) => (prev === id ? null : id));
           }}
           onAnnotationCreate={handleAnnotationCreate}
           onAnnotationCancel={handleAnnotationCancel}
+          isAuthenticated={isAuthenticated}
+          onLoginClick={onLoginClick}
         />
       </div>
     </div>

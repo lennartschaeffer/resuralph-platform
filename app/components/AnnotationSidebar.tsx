@@ -20,6 +20,8 @@ interface AnnotationSidebarProps {
     position: { pageNumber: number; rects: AnnotationRect[] };
   }) => void;
   onAnnotationCancel: () => void;
+  isAuthenticated?: boolean;
+  onLoginClick?: () => void;
 }
 
 export default function AnnotationSidebar({
@@ -30,6 +32,8 @@ export default function AnnotationSidebar({
   onAnnotationClick,
   onAnnotationCreate,
   onAnnotationCancel,
+  isAuthenticated = false,
+  onLoginClick,
 }: AnnotationSidebarProps) {
   // Sort annotations by their vertical position on the page (topmost first)
   const sortedAnnotations = [...annotations].sort((a, b) => {
@@ -66,9 +70,25 @@ export default function AnnotationSidebar({
           {sortedAnnotations.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-sm text-gray-500">No annotations yet</p>
-              <p className="text-xs text-gray-400 mt-1">
-                Select text in the PDF to create one
-              </p>
+              {isAuthenticated ? (
+                <p className="text-xs text-gray-400 mt-1">
+                  Select text in the PDF to create one
+                </p>
+              ) : (
+                <div className="mt-2">
+                  <p className="text-xs text-gray-400">
+                    Sign in to create annotations
+                  </p>
+                  {onLoginClick && (
+                    <button
+                      onClick={onLoginClick}
+                      className="mt-2 px-3 py-1.5 text-xs font-medium rounded-md bg-[#5865F2] text-white hover:bg-[#4752C4] transition-colors"
+                    >
+                      Sign in with Discord
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           ) : (
             sortedAnnotations.map((annotation) => (

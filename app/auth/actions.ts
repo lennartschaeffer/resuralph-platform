@@ -3,13 +3,19 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
-export async function signInWithDiscord() {
+export async function signInWithDiscord(formData: FormData) {
+  const next = formData.get("next") as string | null;
   const supabase = await createClient();
+
+  const callbackUrl = new URL("/auth/callback", process.env.NEXT_PUBLIC_SITE_URL!);
+  if (next) {
+    callbackUrl.searchParams.set("next", next);
+  }
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "discord",
     options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+      redirectTo: callbackUrl.toString(),
       scopes: "identify email",
     },
   });
