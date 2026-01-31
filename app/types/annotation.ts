@@ -15,8 +15,7 @@ export interface Annotation {
   selectedText: string;
   comment: string;
   position: AnnotationPosition;
-  color: string; // Hex color (e.g., "#ffeb3b")
-  priority: "high" | "medium" | "low";
+  isHighPriority: boolean;
   createdAt: Date;
   creatorId: string;
 }

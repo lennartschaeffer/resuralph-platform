@@ -5,7 +5,7 @@ import { Document, Page, pdfjs } from "react-pdf";
 import AnnotationOverlay from "./AnnotationOverlay";
 import AnnotationSidebar from "./AnnotationSidebar";
 import TextSelectionLayer from "./TextSelectionLayer";
-import { Annotation } from "@/app/types/annotation";
+import { Annotation, AnnotationRect } from "@/app/types/annotation";
 import { mockAnnotations } from "@/app/data/mockAnnotations";
 
 import "react-pdf/dist/Page/AnnotationLayer.css";
@@ -36,11 +36,17 @@ export default function PDFViewer({ pdfUrl }: PDFViewerProps) {
   const [fitMode, setFitMode] = useState<FitMode>("none");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [annotations] = useState<Annotation[]>(mockAnnotations);
+  const [annotations, setAnnotations] = useState<Annotation[]>(mockAnnotations);
   const [activeAnnotationId, setActiveAnnotationId] = useState<string | null>(
     null,
   );
-  const [selectedText, setSelectedText] = useState<string | null>(null);
+
+  // Pending selection data from TextSelectionLayer (shown after clicking "Annotate")
+  const [pendingSelection, setPendingSelection] = useState<{
+    text: string;
+    rects: AnnotationRect[];
+    pageNumber: number;
+  } | null>(null);
 
   // Store the base viewport (scale=1) for fit calculations
   const baseViewportRef = useRef<{ width: number; height: number } | null>(
@@ -157,6 +163,42 @@ export default function PDFViewer({ pdfUrl }: PDFViewerProps) {
       setCurrentPage(value);
     }
   }
+
+  // Called when user clicks "Annotate" button after selecting text
+  const handleSelectionComplete = useCallback(
+    (data: { text: string; rects: AnnotationRect[]; pageNumber: number }) => {
+      setPendingSelection(data);
+    },
+    [],
+  );
+
+  // Called when user submits the annotation creation form
+  const handleAnnotationCreate = useCallback(
+    (data: {
+      selectedText: string;
+      comment: string;
+      isHighPriority: boolean;
+      position: { pageNumber: number; rects: AnnotationRect[] };
+    }) => {
+      const newAnnotation: Annotation = {
+        id: crypto.randomUUID(),
+        selectedText: data.selectedText,
+        comment: data.comment,
+        position: data.position,
+        isHighPriority: data.isHighPriority,
+        createdAt: new Date(),
+        creatorId: "local-user",
+      };
+      setAnnotations((prev) => [...prev, newAnnotation]);
+      setPendingSelection(null);
+    },
+    [],
+  );
+
+  // Called when user cancels the annotation creation form
+  const handleAnnotationCancel = useCallback(() => {
+    setPendingSelection(null);
+  }, []);
 
   if (error) {
     return (
@@ -311,14 +353,22 @@ export default function PDFViewer({ pdfUrl }: PDFViewerProps) {
                 activeAnnotationId={activeAnnotationId}
                 onAnnotationClick={(id) => {
                   setActiveAnnotationId((prev) => (prev === id ? null : id));
-                  console.log("Annotation clicked:", id);
                 }}
+                pendingHighlight={
+                  pendingSelection
+                    ? {
+                        rects: pendingSelection.rects,
+                        pageNumber: pendingSelection.pageNumber,
+                      }
+                    : null
+                }
               />
             </div>
             <TextSelectionLayer
               containerRef={pageWrapperRef}
               scale={scale}
               currentPage={currentPage}
+              onSelectionComplete={handleSelectionComplete}
             />
           </div>
         </Document>
@@ -331,10 +381,12 @@ export default function PDFViewer({ pdfUrl }: PDFViewerProps) {
           annotations={annotations}
           currentPage={currentPage}
           activeAnnotationId={activeAnnotationId}
-          selectedText={selectedText}
+          pendingSelection={pendingSelection}
           onAnnotationClick={(id) => {
             setActiveAnnotationId((prev) => (prev === id ? null : id));
           }}
+          onAnnotationCreate={handleAnnotationCreate}
+          onAnnotationCancel={handleAnnotationCancel}
         />
       </div>
     </div>

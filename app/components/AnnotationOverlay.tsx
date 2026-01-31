@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Annotation } from "@/app/types/annotation";
+import { Annotation, AnnotationRect } from "@/app/types/annotation";
+
+interface PendingHighlight {
+  rects: AnnotationRect[];
+  pageNumber: number;
+}
 
 interface AnnotationOverlayProps {
   annotations: Annotation[];
@@ -9,6 +14,7 @@ interface AnnotationOverlayProps {
   scale: number;
   activeAnnotationId: string | null;
   onAnnotationClick: (annotationId: string) => void;
+  pendingHighlight: PendingHighlight | null;
 }
 
 export default function AnnotationOverlay({
@@ -17,6 +23,7 @@ export default function AnnotationOverlay({
   scale,
   activeAnnotationId,
   onAnnotationClick,
+  pendingHighlight,
 }: AnnotationOverlayProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
@@ -24,7 +31,10 @@ export default function AnnotationOverlay({
     (a) => a.position.pageNumber === currentPage,
   );
 
-  if (pageAnnotations.length === 0) return null;
+  const showPending =
+    pendingHighlight && pendingHighlight.pageNumber === currentPage;
+
+  if (pageAnnotations.length === 0 && !showPending) return null;
 
   return (
     <>
@@ -32,6 +42,7 @@ export default function AnnotationOverlay({
         annotation.position.rects.map((rect, rectIndex) => {
           const isActive = annotation.id === activeAnnotationId;
           const isHovered = annotation.id === hoveredId;
+          const color = annotation.isHighPriority ? "#ef4444" : "#ffeb3b";
 
           return (
             <div
@@ -42,10 +53,10 @@ export default function AnnotationOverlay({
                 top: rect.y * scale,
                 width: rect.width * scale,
                 height: rect.height * scale,
-                backgroundColor: annotation.color,
+                backgroundColor: color,
                 opacity: isActive ? 0.5 : isHovered ? 0.4 : 0.25,
                 border: isActive
-                  ? `2px solid ${annotation.color}`
+                  ? `2px solid ${color}`
                   : "1px solid transparent",
                 borderRadius: 2,
                 pointerEvents: "auto",
@@ -61,6 +72,26 @@ export default function AnnotationOverlay({
           );
         }),
       )}
+
+      {/* Pending highlight for annotation being created */}
+      {showPending &&
+        pendingHighlight.rects.map((rect, i) => (
+          <div
+            key={`pending-${i}`}
+            className="absolute transition-opacity duration-150 animate-pulse"
+            style={{
+              left: rect.x * scale,
+              top: rect.y * scale,
+              width: rect.width * scale,
+              height: rect.height * scale,
+              backgroundColor: "#ffeb3b",
+              opacity: 0.4,
+              border: "2px solid #ffeb3b",
+              borderRadius: 2,
+              pointerEvents: "none",
+            }}
+          />
+        ))}
     </>
   );
 }

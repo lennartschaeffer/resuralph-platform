@@ -1,28 +1,41 @@
 "use client";
 
-import { Annotation } from "@/app/types/annotation";
+import { Annotation, AnnotationRect } from "@/app/types/annotation";
+import AnnotationCreationForm from "./AnnotationCreationForm";
 
 interface AnnotationSidebarProps {
   annotations: Annotation[];
   currentPage: number;
   activeAnnotationId: string | null;
-  selectedText: string | null;
+  pendingSelection: {
+    text: string;
+    rects: AnnotationRect[];
+    pageNumber: number;
+  } | null;
   onAnnotationClick: (annotationId: string) => void;
+  onAnnotationCreate: (data: {
+    selectedText: string;
+    comment: string;
+    isHighPriority: boolean;
+    position: { pageNumber: number; rects: AnnotationRect[] };
+  }) => void;
+  onAnnotationCancel: () => void;
 }
 
 export default function AnnotationSidebar({
   annotations,
   currentPage,
   activeAnnotationId,
-  selectedText,
+  pendingSelection,
   onAnnotationClick,
+  onAnnotationCreate,
+  onAnnotationCancel,
 }: AnnotationSidebarProps) {
   // Sort annotations by their vertical position on the page (topmost first)
   const sortedAnnotations = [...annotations].sort((a, b) => {
     if (a.position.pageNumber !== b.position.pageNumber) {
       return a.position.pageNumber - b.position.pageNumber;
     }
-    // Sort by the y-coordinate of the first rect (topmost first)
     const aY = a.position.rects[0]?.y ?? 0;
     const bY = b.position.rects[0]?.y ?? 0;
     return aY - bY;
@@ -38,21 +51,13 @@ export default function AnnotationSidebar({
         </span>
       </div>
 
-      {/* Annotation Creation Form Placeholder */}
-      {selectedText && (
-        <div className="p-4 bg-blue-50 border-b border-blue-100 shrink-0">
-          <div className="text-xs font-semibold text-blue-900 mb-2">
-            NEW ANNOTATION
-          </div>
-          <div className="p-3 bg-white border border-blue-200 rounded-md">
-            <p className="text-xs text-gray-500 italic">
-              &ldquo;{selectedText}&rdquo;
-            </p>
-            <p className="text-xs text-gray-400 mt-2">
-              [Annotation creation form placeholder]
-            </p>
-          </div>
-        </div>
+      {/* Annotation Creation Form */}
+      {pendingSelection && (
+        <AnnotationCreationForm
+          selectionData={pendingSelection}
+          onSubmit={onAnnotationCreate}
+          onCancel={onAnnotationCancel}
+        />
       )}
 
       {/* Scrollable Annotation List */}
@@ -81,13 +86,11 @@ export default function AnnotationSidebar({
                   <span className="text-xs font-medium text-gray-500">
                     Page {annotation.position.pageNumber}
                   </span>
-                  <span
-                    className="w-2 h-2 rounded-full"
-                    style={{ backgroundColor: annotation.color }}
-                  />
-                  <span className="text-xs text-gray-400 capitalize">
-                    {annotation.priority}
-                  </span>
+                  {annotation.isHighPriority && (
+                    <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-red-100 text-red-700">
+                      High Priority
+                    </span>
+                  )}
                 </div>
 
                 {/* Selected text snippet */}
