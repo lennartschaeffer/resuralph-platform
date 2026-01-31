@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import AnnotationOverlay from "./AnnotationOverlay";
 import AnnotationSidebar from "./AnnotationSidebar";
+import TextSelectionLayer from "./TextSelectionLayer";
 import { Annotation } from "@/app/types/annotation";
 import { mockAnnotations } from "@/app/data/mockAnnotations";
 
@@ -28,6 +29,7 @@ interface PDFViewerProps {
 
 export default function PDFViewer({ pdfUrl }: PDFViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const pageWrapperRef = useRef<HTMLDivElement>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [scale, setScale] = useState(1.5);
@@ -292,7 +294,7 @@ export default function PDFViewer({ pdfUrl }: PDFViewerProps) {
             </div>
           }
         >
-          <div className="relative">
+          <div ref={pageWrapperRef} className="relative">
             <Page
               pageNumber={currentPage}
               scale={scale}
@@ -313,6 +315,11 @@ export default function PDFViewer({ pdfUrl }: PDFViewerProps) {
                 }}
               />
             </div>
+            <TextSelectionLayer
+              containerRef={pageWrapperRef}
+              scale={scale}
+              currentPage={currentPage}
+            />
           </div>
         </Document>
       </div>
