@@ -2,6 +2,9 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
+import AnnotationOverlay from "./AnnotationOverlay";
+import { Annotation } from "@/app/types/annotation";
+import { mockAnnotations } from "@/app/data/mockAnnotations";
 
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -30,6 +33,10 @@ export default function PDFViewer({ pdfUrl }: PDFViewerProps) {
   const [fitMode, setFitMode] = useState<FitMode>("none");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [annotations] = useState<Annotation[]>(mockAnnotations);
+  const [activeAnnotationId, setActiveAnnotationId] = useState<string | null>(
+    null,
+  );
 
   // Store the base viewport (scale=1) for fit calculations
   const baseViewportRef = useRef<{ width: number; height: number } | null>(
@@ -171,14 +178,14 @@ export default function PDFViewer({ pdfUrl }: PDFViewerProps) {
           <button
             onClick={goToPreviousPage}
             disabled={currentPage <= 1 || isLoading}
-            className="px-3 py-1.5 text-sm font-medium rounded-md border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="px-3 py-1.5 text-sm font-medium rounded-md border border-gray-300 bg-gray-900 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             Previous
           </button>
           <button
             onClick={goToNextPage}
             disabled={currentPage >= totalPages || isLoading}
-            className="px-3 py-1.5 text-sm font-medium rounded-md border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="px-3 py-1.5 text-sm font-medium rounded-md border border-gray-300 bg-gray-900 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             Next
           </button>
@@ -281,14 +288,26 @@ export default function PDFViewer({ pdfUrl }: PDFViewerProps) {
             </div>
           }
         >
-          <Page
-            pageNumber={currentPage}
-            scale={scale}
-            onLoadSuccess={handlePageLoadSuccess}
-            renderTextLayer={true}
-            renderAnnotationLayer={true}
-            className="shadow-lg"
-          />
+          <div className="relative">
+            <Page
+              pageNumber={currentPage}
+              scale={scale}
+              onLoadSuccess={handlePageLoadSuccess}
+              renderTextLayer={true}
+              renderAnnotationLayer={true}
+              className="shadow-lg"
+            />
+            <AnnotationOverlay
+              annotations={annotations}
+              currentPage={currentPage}
+              scale={scale}
+              activeAnnotationId={activeAnnotationId}
+              onAnnotationClick={(id) => {
+                setActiveAnnotationId((prev) => (prev === id ? null : id));
+                console.log("Annotation clicked:", id);
+              }}
+            />
+          </div>
         </Document>
       </div>
     </div>
