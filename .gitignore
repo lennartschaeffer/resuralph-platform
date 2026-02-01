@@ -45,3 +45,9 @@ plans/
 plan.md
 
 CLAUDE.md
+
+/lib/generated/prisma
+
+# Prisma
+prisma/*.db
+prisma/*.db-journal
