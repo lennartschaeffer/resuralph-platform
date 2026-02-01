@@ -31,20 +31,17 @@ export default function AnnotationCreationForm({
   const [isTextExpanded, setIsTextExpanded] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auto-focus the comment textarea when the form appears
   useEffect(() => {
     textareaRef.current?.focus();
   }, []);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-
     const trimmed = comment.trim();
     if (!trimmed) {
       setError("Comment is required.");
       return;
     }
-
     onSubmit({
       selectedText: selectionData.text,
       comment: trimmed,
@@ -54,7 +51,6 @@ export default function AnnotationCreationForm({
         rects: selectionData.rects,
       },
     });
-
     setComment("");
     setIsHighPriority(false);
     setError(null);
@@ -64,15 +60,42 @@ export default function AnnotationCreationForm({
   const shouldTruncate = displayText.length > 120;
 
   return (
-    <div className="p-4 bg-blue-50 border-b border-blue-100 shrink-0 animate-in slide-in-from-top-2 fade-in duration-200">
-      <div className="text-xs font-semibold text-blue-900 mb-2">
-        NEW ANNOTATION
+    <div
+      className="p-4 shrink-0 animate-slide-up"
+      style={{
+        background: 'var(--surface-2)',
+        borderBottom: '1px solid var(--border-default)',
+      }}
+    >
+      {/* Header */}
+      <div className="flex items-center gap-2 mb-3">
+        <div
+          className="cr-status-dot animate-pulse-glow"
+          style={{ background: 'var(--accent)' }}
+        />
+        <span
+          className="cr-badge"
+          style={{
+            background: 'var(--accent-glow)',
+            color: 'var(--accent-bright)',
+            border: '1px solid var(--accent-dim)',
+          }}
+        >
+          New Annotation
+        </span>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-3">
         {/* Selected text preview */}
-        <div className="p-2.5 bg-white border border-blue-200 rounded-md">
-          <p className="text-xs text-gray-600 italic">
+        <div
+          className="p-2.5 rounded"
+          style={{
+            background: 'var(--surface-1)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: 'var(--radius-sm)',
+          }}
+        >
+          <p className="text-[11px] italic" style={{ color: 'var(--text-tertiary)' }}>
             &ldquo;
             {shouldTruncate && !isTextExpanded
               ? displayText.slice(0, 120) + "..."
@@ -83,14 +106,22 @@ export default function AnnotationCreationForm({
             <button
               type="button"
               onClick={() => setIsTextExpanded(!isTextExpanded)}
-              className="text-xs text-blue-600 hover:text-blue-700 mt-1"
+              className="text-[10px] mt-1 transition-colors duration-150"
+              style={{
+                fontFamily: 'var(--font-mono)',
+                color: 'var(--accent-bright)',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+              }}
             >
               {isTextExpanded ? "Show less" : "Show more"}
             </button>
           )}
         </div>
 
-        {/* Comment textarea */}
+        {/* Comment */}
         <div>
           <textarea
             ref={textareaRef}
@@ -101,39 +132,43 @@ export default function AnnotationCreationForm({
             }}
             placeholder="Add your comment..."
             rows={3}
-            className="w-full px-3 py-2 text-sm text-black border border-gray-300 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="cr-input w-full resize-none"
+            style={{ fontSize: '12px', lineHeight: '1.5' }}
           />
-          {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
+          {error && (
+            <p className="text-[10px] mt-1" style={{ color: 'var(--danger-text)' }}>
+              {error}
+            </p>
+          )}
         </div>
 
-        {/* High priority toggle */}
+        {/* Priority toggle */}
         <label className="flex items-center gap-2 cursor-pointer select-none">
           <input
             type="checkbox"
             checked={isHighPriority}
             onChange={(e) => setIsHighPriority(e.target.checked)}
-            className="w-3.5 h-3.5 rounded border-gray-300 text-red-600 focus:ring-red-500"
+            className="w-3.5 h-3.5 rounded accent-red-500"
+            style={{ accentColor: 'var(--danger)' }}
           />
           <span
-            className={`text-xs font-medium ${isHighPriority ? "text-red-700" : "text-gray-600"}`}
+            className="text-[11px] font-medium"
+            style={{
+              fontFamily: 'var(--font-mono)',
+              color: isHighPriority ? 'var(--danger-text)' : 'var(--text-tertiary)',
+              transition: 'color 0.15s ease',
+            }}
           >
             High Priority
           </span>
         </label>
 
-        {/* Action buttons */}
+        {/* Actions */}
         <div className="flex items-center gap-2 justify-end">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-          >
+          <button type="button" onClick={onCancel} className="cr-btn" style={{ fontSize: '10px' }}>
             Cancel
           </button>
-          <button
-            type="submit"
-            className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
-          >
+          <button type="submit" className="cr-btn cr-btn-accent" style={{ fontSize: '10px' }}>
             Add Annotation
           </button>
         </div>

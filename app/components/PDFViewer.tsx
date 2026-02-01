@@ -29,7 +29,11 @@ interface PDFViewerProps {
   onLoginClick?: () => void;
 }
 
-export default function PDFViewer({ pdfUrl, isAuthenticated = false, onLoginClick }: PDFViewerProps) {
+export default function PDFViewer({
+  pdfUrl,
+  isAuthenticated = false,
+  onLoginClick,
+}: PDFViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const pageWrapperRef = useRef<HTMLDivElement>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -42,20 +46,16 @@ export default function PDFViewer({ pdfUrl, isAuthenticated = false, onLoginClic
   const [activeAnnotationId, setActiveAnnotationId] = useState<string | null>(
     null,
   );
-
-  // Pending selection data from TextSelectionLayer (shown after clicking "Annotate")
   const [pendingSelection, setPendingSelection] = useState<{
     text: string;
     rects: AnnotationRect[];
     pageNumber: number;
   } | null>(null);
 
-  // Store the base viewport (scale=1) for fit calculations
   const baseViewportRef = useRef<{ width: number; height: number } | null>(
     null,
   );
 
-  // --- Document & Page callbacks ---
   const handleDocumentLoadSuccess = useCallback(
     ({ numPages }: { numPages: number }) => {
       setTotalPages(numPages);
@@ -81,14 +81,12 @@ export default function PDFViewer({ pdfUrl, isAuthenticated = false, onLoginClic
     [],
   );
 
-  // Calculate fit scale based on container dimensions and page dimensions
   const calculateFitScale = useCallback((mode: FitMode) => {
     if (mode === "none" || !containerRef.current || !baseViewportRef.current) {
       return null;
     }
-
     const container = containerRef.current;
-    const padding = 32; // 16px padding on each side
+    const padding = 32;
     const availableWidth = container.clientWidth - padding;
     const availableHeight = container.clientHeight - padding;
     const { width: pageWidth, height: pageHeight } = baseViewportRef.current;
@@ -96,29 +94,21 @@ export default function PDFViewer({ pdfUrl, isAuthenticated = false, onLoginClic
     if (mode === "fit-width") {
       return Math.min(availableWidth / pageWidth, MAX_SCALE);
     }
-
-    // fit-page: fit both dimensions
     const scaleX = availableWidth / pageWidth;
     const scaleY = availableHeight / pageHeight;
     return Math.min(scaleX, scaleY, MAX_SCALE);
   }, []);
 
-  // Recalculate fit scale on window resize
   useEffect(() => {
     if (fitMode === "none") return;
-
     function handleResize() {
       const newScale = calculateFitScale(fitMode);
-      if (newScale !== null) {
-        setScale(newScale);
-      }
+      if (newScale !== null) setScale(newScale);
     }
-
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [fitMode, calculateFitScale]);
 
-  // --- Zoom handlers ---
   function zoomIn() {
     setFitMode("none");
     setScale((prev) => Math.min(prev + ZOOM_STEP, MAX_SCALE));
@@ -137,20 +127,15 @@ export default function PDFViewer({ pdfUrl, isAuthenticated = false, onLoginClic
   function fitToWidth() {
     setFitMode("fit-width");
     const newScale = calculateFitScale("fit-width");
-    if (newScale !== null) {
-      setScale(newScale);
-    }
+    if (newScale !== null) setScale(newScale);
   }
 
   function fitToPage() {
     setFitMode("fit-page");
     const newScale = calculateFitScale("fit-page");
-    if (newScale !== null) {
-      setScale(newScale);
-    }
+    if (newScale !== null) setScale(newScale);
   }
 
-  // --- Page navigation ---
   function goToPreviousPage() {
     setCurrentPage((prev) => Math.max(1, prev - 1));
   }
@@ -166,7 +151,6 @@ export default function PDFViewer({ pdfUrl, isAuthenticated = false, onLoginClic
     }
   }
 
-  // Called when user clicks "Annotate" button after selecting text
   const handleSelectionComplete = useCallback(
     (data: { text: string; rects: AnnotationRect[]; pageNumber: number }) => {
       setPendingSelection(data);
@@ -174,7 +158,6 @@ export default function PDFViewer({ pdfUrl, isAuthenticated = false, onLoginClic
     [],
   );
 
-  // Called when user submits the annotation creation form
   const handleAnnotationCreate = useCallback(
     (data: {
       selectedText: string;
@@ -197,17 +180,39 @@ export default function PDFViewer({ pdfUrl, isAuthenticated = false, onLoginClic
     [],
   );
 
-  // Called when user cancels the annotation creation form
   const handleAnnotationCancel = useCallback(() => {
     setPendingSelection(null);
   }, []);
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div
+        className="flex items-center justify-center h-full"
+        style={{ background: "var(--surface-0)" }}
+      >
         <div className="text-center">
-          <p className="text-red-500 text-lg font-medium">{error}</p>
-          <p className="text-gray-500 mt-2 text-sm">
+          <div
+            className="cr-badge mb-3 inline-block"
+            style={{
+              background: "var(--danger-dim)",
+              color: "var(--danger-text)",
+            }}
+          >
+            Error
+          </div>
+          <p
+            className="text-sm font-medium"
+            style={{ color: "var(--danger-text)" }}
+          >
+            {error}
+          </p>
+          <p
+            className="text-xs mt-2"
+            style={{
+              fontFamily: "var(--font-mono)",
+              color: "var(--text-tertiary)",
+            }}
+          >
             Check the URL and try again.
           </p>
         </div>
@@ -218,180 +223,304 @@ export default function PDFViewer({ pdfUrl, isAuthenticated = false, onLoginClic
   const zoomPercentage = Math.round(scale * 100);
 
   return (
-    <div className="flex flex-col lg:flex-row h-full">
+    <div
+      className="flex flex-col lg:flex-row h-full"
+      style={{ background: "var(--surface-0)" }}
+    >
       {/* PDF Viewer Section */}
       <div className="flex flex-col flex-1 h-full lg:h-auto">
-        {/* Viewer Controls */}
-        <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 bg-gray-50 shrink-0">
-        {/* Auth Controls */}
-        {!isAuthenticated && onLoginClick && (
-          <div className="flex items-center">
+        {/* ── Control Bar ── */}
+        <div
+          className="flex items-center justify-between px-3 py-1.5 shrink-0 animate-boot"
+          style={{
+            background: "var(--surface-1)",
+            borderBottom: "1px solid var(--border-subtle)",
+          }}
+        >
+          {/* Auth Status */}
+          {!isAuthenticated && onLoginClick && (
             <button
               onClick={onLoginClick}
-              className="px-3 py-1.5 text-xs font-medium rounded-md bg-[#5865F2] text-white hover:bg-[#4752C4] transition-colors"
+              className="cr-btn cr-btn-accent"
+              style={{ fontSize: "10px" }}
             >
-              Sign in to annotate
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                <polyline points="10 17 15 12 10 7" />
+                <line x1="15" y1="12" x2="3" y2="12" />
+              </svg>
+              Sign In
+            </button>
+          )}
+
+          {isAuthenticated && (
+            <div className="flex items-center gap-1.5">
+              <div
+                className="cr-status-dot"
+                style={{ background: "var(--success)" }}
+              />
+              <span
+                className="text-[10px] tracking-wider uppercase"
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  color: "var(--text-tertiary)",
+                }}
+              >
+                Write Access
+              </span>
+            </div>
+          )}
+
+          {/* ── Navigation ── */}
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={goToPreviousPage}
+              disabled={currentPage <= 1 || isLoading}
+              className="cr-btn"
+              style={{ padding: "4px 8px" }}
+              title="Previous page"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </button>
+
+            <div
+              className="flex items-center gap-1.5"
+              style={{ fontFamily: "var(--font-mono)" }}
+            >
+              <input
+                type="number"
+                min={1}
+                max={totalPages}
+                value={currentPage}
+                onChange={handlePageInputChange}
+                disabled={isLoading || totalPages === 0}
+                className="cr-input text-center"
+                style={{ width: "40px", padding: "3px 4px", fontSize: "11px" }}
+              />
+              <span
+                className="text-[11px]"
+                style={{ color: "var(--text-tertiary)" }}
+              >
+                / {totalPages}
+              </span>
+            </div>
+
+            <button
+              onClick={goToNextPage}
+              disabled={currentPage >= totalPages || isLoading}
+              className="cr-btn"
+              style={{ padding: "4px 8px" }}
+              title="Next page"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
             </button>
           </div>
-        )}
-        {/* Navigation Controls */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={goToPreviousPage}
-            disabled={currentPage <= 1 || isLoading}
-            className="px-3 py-1.5 text-sm font-medium rounded-md border border-gray-300 bg-gray-900 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            Previous
-          </button>
-          <button
-            onClick={goToNextPage}
-            disabled={currentPage >= totalPages || isLoading}
-            className="px-3 py-1.5 text-sm font-medium rounded-md border border-gray-300 bg-gray-900 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            Next
-          </button>
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <span>Page</span>
-            <input
-              type="number"
-              min={1}
-              max={totalPages}
-              value={currentPage}
-              onChange={handlePageInputChange}
-              disabled={isLoading || totalPages === 0}
-              className="w-12 px-1.5 py-1 text-center text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <span>of {totalPages}</span>
-          </div>
-        </div>
 
-        {/* Zoom Controls */}
-        <div className="flex items-center gap-1.5">
-          <button
-            onClick={zoomOut}
-            disabled={scale <= MIN_SCALE || isLoading}
-            className="w-8 h-8 flex items-center justify-center text-sm font-medium rounded-md border border-gray-300 bg-gray-900 hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            title="Zoom out (-)"
-          >
-            &minus;
-          </button>
+          {/* ── Zoom Controls ── */}
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={zoomOut}
+              disabled={scale <= MIN_SCALE || isLoading}
+              className="cr-btn"
+              style={{ padding: "4px 8px" }}
+              title="Zoom out"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            </button>
 
-          <select
-            value={ZOOM_PRESETS.includes(scale) ? scale.toString() : "custom"}
-            onChange={(e) => {
-              const val = e.target.value;
-              if (val !== "custom") {
-                setZoomPreset(parseFloat(val));
+            <select
+              value={ZOOM_PRESETS.includes(scale) ? scale.toString() : "custom"}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val !== "custom") setZoomPreset(parseFloat(val));
+              }}
+              className="cr-input"
+              style={{
+                padding: "3px 6px",
+                fontSize: "11px",
+                minWidth: "64px",
+                cursor: "pointer",
+              }}
+            >
+              {!ZOOM_PRESETS.includes(scale) && (
+                <option value="custom">{zoomPercentage}%</option>
+              )}
+              {ZOOM_PRESETS.map((preset) => (
+                <option key={preset} value={preset.toString()}>
+                  {Math.round(preset * 100)}%
+                </option>
+              ))}
+            </select>
+
+            <button
+              onClick={zoomIn}
+              disabled={scale >= MAX_SCALE || isLoading}
+              className="cr-btn"
+              style={{ padding: "4px 8px" }}
+              title="Zoom in"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            </button>
+
+            <div className="cr-divider" />
+
+            <button
+              onClick={fitToWidth}
+              disabled={isLoading}
+              className="cr-btn"
+              style={
+                fitMode === "fit-width"
+                  ? {
+                      background: "var(--accent-glow)",
+                      color: "var(--accent-bright)",
+                      borderColor: "var(--accent)",
+                    }
+                  : {}
               }
-            }}
-            className="h-8 px-1.5 text-sm border border-gray-300 rounded-md bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            {!ZOOM_PRESETS.includes(scale) && (
-              <option value="custom">{zoomPercentage}%</option>
-            )}
-            {ZOOM_PRESETS.map((preset) => (
-              <option key={preset} value={preset.toString()}>
-                {Math.round(preset * 100)}%
-              </option>
-            ))}
-          </select>
-
-          <button
-            onClick={zoomIn}
-            disabled={scale >= MAX_SCALE || isLoading}
-            className="w-8 h-8 flex items-center justify-center text-sm font-medium rounded-md border border-gray-300 bg-gray-900 hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            title="Zoom in (+)"
-          >
-            +
-          </button>
-
-          <div className="w-px h-6 bg-gray-300 mx-1" />
-
-          <button
-            onClick={fitToWidth}
-            disabled={isLoading}
-            className={`px-2.5 py-1.5 text-xs font-medium rounded-md border transition-colors ${
-              fitMode === "fit-width"
-                ? "border-blue-500 bg-blue-50 text-blue-700"
-                : "border-gray-300 bg-white hover:bg-gray-100 text-gray-700"
-            } disabled:opacity-40 disabled:cursor-not-allowed`}
-            title="Fit to width"
-          >
-            Fit Width
-          </button>
-          <button
-            onClick={fitToPage}
-            disabled={isLoading}
-            className={`px-2.5 py-1.5 text-xs font-medium rounded-md border transition-colors ${
-              fitMode === "fit-page"
-                ? "border-blue-500 bg-blue-50 text-blue-700"
-                : "border-gray-300 bg-white hover:bg-gray-100 text-gray-700"
-            } disabled:opacity-40 disabled:cursor-not-allowed`}
-            title="Fit to page"
-          >
-            Fit Page
-          </button>
-        </div>
-      </div>
-
-      {/* PDF Viewer Area */}
-      <div
-        ref={containerRef}
-        className={`flex-1 overflow-auto bg-gray-100 flex justify-center p-4 `}
-      >
-        <Document
-          file={pdfUrl}
-          onLoadSuccess={handleDocumentLoadSuccess}
-          onLoadError={handleDocumentLoadError}
-          loading={
-            <div className="flex items-center justify-center h-full">
-              <div className="text-gray-500 text-sm">Loading PDF...</div>
-            </div>
-          }
-        >
-          <div ref={pageWrapperRef} className="relative">
-            <Page
-              pageNumber={currentPage}
-              scale={scale}
-              onLoadSuccess={handlePageLoadSuccess}
-              renderTextLayer={true}
-              renderAnnotationLayer={true}
-              className="shadow-lg"
-            />
-            <div className="absolute inset-0 z-10 pointer-events-none">
-              <AnnotationOverlay
-                annotations={annotations}
-                currentPage={currentPage}
-                scale={scale}
-                activeAnnotationId={activeAnnotationId}
-                onAnnotationClick={(id) => {
-                  setActiveAnnotationId((prev) => (prev === id ? null : id));
-                }}
-                pendingHighlight={
-                  pendingSelection
-                    ? {
-                        rects: pendingSelection.rects,
-                        pageNumber: pendingSelection.pageNumber,
-                      }
-                    : null
-                }
-              />
-            </div>
-            {isAuthenticated && (
-              <TextSelectionLayer
-                containerRef={pageWrapperRef}
-                scale={scale}
-                currentPage={currentPage}
-                onSelectionComplete={handleSelectionComplete}
-              />
-            )}
+              title="Fit to width"
+            >
+              Fit W
+            </button>
+            <button
+              onClick={fitToPage}
+              disabled={isLoading}
+              className="cr-btn"
+              style={
+                fitMode === "fit-page"
+                  ? {
+                      background: "var(--accent-glow)",
+                      color: "var(--accent-bright)",
+                      borderColor: "var(--accent)",
+                    }
+                  : {}
+              }
+              title="Fit to page"
+            >
+              Fit P
+            </button>
           </div>
-        </Document>
-      </div>
+        </div>
+
+        {/* ── PDF Viewport ── */}
+        <div
+          ref={containerRef}
+          className="flex-1 overflow-auto flex justify-center p-4"
+          style={{ background: "var(--surface-3)" }}
+        >
+          <Document
+            file={pdfUrl}
+            onLoadSuccess={handleDocumentLoadSuccess}
+            onLoadError={handleDocumentLoadError}
+            loading={
+              <div className="flex items-center justify-center h-full">
+                <div className="flex items-center gap-2">
+                  <div
+                    className="cr-status-dot animate-status-blink"
+                    style={{ background: "var(--accent)" }}
+                  />
+                  <span
+                    className="text-xs"
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      color: "var(--text-tertiary)",
+                    }}
+                  >
+                    Loading document...
+                  </span>
+                </div>
+              </div>
+            }
+          >
+            <div ref={pageWrapperRef} className="relative">
+              <Page
+                pageNumber={currentPage}
+                scale={scale}
+                onLoadSuccess={handlePageLoadSuccess}
+                renderTextLayer={true}
+                renderAnnotationLayer={true}
+                className="shadow-lg rounded-sm"
+              />
+              <div className="absolute inset-0 z-10 pointer-events-none">
+                <AnnotationOverlay
+                  annotations={annotations}
+                  currentPage={currentPage}
+                  scale={scale}
+                  activeAnnotationId={activeAnnotationId}
+                  onAnnotationClick={(id) => {
+                    setActiveAnnotationId((prev) => (prev === id ? null : id));
+                  }}
+                  pendingHighlight={
+                    pendingSelection
+                      ? {
+                          rects: pendingSelection.rects,
+                          pageNumber: pendingSelection.pageNumber,
+                        }
+                      : null
+                  }
+                />
+              </div>
+              {isAuthenticated && (
+                <TextSelectionLayer
+                  containerRef={pageWrapperRef}
+                  scale={scale}
+                  currentPage={currentPage}
+                  onSelectionComplete={handleSelectionComplete}
+                />
+              )}
+            </div>
+          </Document>
+        </div>
       </div>
 
       {/* Annotation Sidebar */}
-      <div className="w-full lg:w-96 h-64 lg:h-full shrink-0">
+      <div
+        className="w-full lg:w-96 h-64 lg:h-full shrink-0"
+        style={{ borderLeft: "1px solid var(--border-subtle)" }}
+      >
         <AnnotationSidebar
           annotations={annotations}
           currentPage={currentPage}

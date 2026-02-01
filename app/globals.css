@@ -1,26 +1,451 @@
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap");
 @import "tailwindcss";
 
+/* ─── TECHNICAL CONTROL ROOM ───────────────────────────────────────────
+   Deep graphite surfaces. Instrument-grade precision. Restrained accent.
+   Built for operators who live in the interface.
+   ───────────────────────────────────────────────────────────────────── */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* ── Surface System ── */
+  --surface-0: #0c0d0f; /* Deepest background */
+  --surface-1: #111214; /* Primary background */
+  --surface-2: #17181c; /* Elevated surface */
+  --surface-3: #1e1f25; /* Card / panel surface */
+  --surface-4: #26272e; /* Hover / interactive surface */
+  --surface-5: #2e3038; /* Active / pressed surface */
+
+  /* ── Border System ── */
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-default: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --border-focus: #6c72cb;
+
+  /* ── Text System ── */
+  --text-primary: #e4e5ea;
+  --text-secondary: #9395a0;
+  --text-tertiary: #5f6170;
+  --text-inverse: #0c0d0f;
+
+  /* ── Accent: Muted Indigo ── */
+  --accent-dim: #4a4f8a;
+  --accent: #6c72cb;
+  --accent-bright: #8b90e0;
+  --accent-glow: rgba(108, 114, 203, 0.15);
+  --accent-glow-strong: rgba(111, 117, 196, 0.3);
+
+  /* ── Semantic Colors ── */
+  --danger: #d94f5c;
+  --danger-dim: rgba(217, 79, 92, 0.15);
+  --danger-text: #f0858e;
+  --warning: #d4a24e;
+  --warning-dim: rgba(212, 162, 78, 0.15);
+  --warning-text: #e8c678;
+  --success: #4aad7a;
+  --success-dim: rgba(74, 173, 122, 0.15);
+
+  /* ── Annotation Colors (dark-theme optimized) ── */
+  --highlight-normal: rgba(212, 162, 78, 0.35);
+  --highlight-normal-solid: #d4a24e;
+  --highlight-priority: rgba(217, 79, 92, 0.35);
+  --highlight-priority-solid: #d94f5c;
+  --highlight-pending: rgba(108, 114, 203, 0.35);
+  --highlight-pending-solid: #6c72cb;
+
+  /* ── Typography ── */
+  --font-display: "JetBrains Mono", monospace;
+  --font-body: "DM Sans", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  /* ── Sizing ── */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+
+  /* ── Depth ── */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6);
+  --shadow-glow: 0 0 20px var(--accent-glow);
+
+  /* ── Mapping for Tailwind ── */
+  --background: var(--surface-0);
+  --foreground: var(--text-primary);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ─── BASE STYLES ──────────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  scrollbar-width: thin;
+  scrollbar-color: var(--surface-4) transparent;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--surface-0);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Subtle noise texture overlay ── */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+}
+
+/* ── Scrollbar Styling ── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--surface-4);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--surface-5);
+}
+
+/* ── Selection ── */
+::selection {
+  background: var(--accent-glow-strong);
+}
+
+/* ── Focus Ring ── */
+:focus-visible {
+  outline: 1.5px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ─── ANIMATIONS ───────────────────────────────────────────────────── */
+
+@keyframes control-room-boot {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+    filter: blur(4px);
+  }
+  60% {
+    filter: blur(0px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0px);
+  }
+}
+
+@keyframes scanline-reveal {
+  0% {
+    clip-path: inset(0 0 100% 0);
+  }
+  100% {
+    clip-path: inset(0 0 0% 0);
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 var(--accent-glow);
+  }
+  50% {
+    box-shadow: 0 0 12px 2px var(--accent-glow);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes flicker-in {
+  0% {
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.8;
+  }
+  20% {
+    opacity: 0.3;
+  }
+  40% {
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes status-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@keyframes horizontal-scan {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* ─── UTILITY CLASSES ──────────────────────────────────────────────── */
+
+.animate-boot {
+  animation: control-room-boot 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-boot-delay-1 {
+  animation: control-room-boot 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.08s both;
+}
+
+.animate-boot-delay-2 {
+  animation: control-room-boot 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.16s both;
+}
+
+.animate-boot-delay-3 {
+  animation: control-room-boot 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.24s both;
+}
+
+.animate-boot-delay-4 {
+  animation: control-room-boot 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.32s both;
+}
+
+.animate-scanline {
+  animation: scanline-reveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-flicker {
+  animation: flicker-in 0.8s ease-out both;
+}
+
+.animate-fade {
+  animation: fade-in 0.3s ease-out both;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-status-blink {
+  animation: status-blink 1.5s ease-in-out infinite;
+}
+
+/* ─── COMPONENT PRIMITIVES ─────────────────────────────────────────── */
+
+/* Control Room Button */
+.cr-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  background: var(--surface-3);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.cr-btn:hover {
+  background: var(--surface-4);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.cr-btn:active {
+  background: var(--surface-5);
+  transform: translateY(0.5px);
+}
+
+.cr-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Accent Button */
+.cr-btn-accent {
+  background: var(--accent-dim);
+  color: var(--accent-bright);
+  border-color: var(--accent);
+}
+
+.cr-btn-accent:hover {
+  background: var(--accent);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-glow);
+}
+
+.cr-btn-accent:active {
+  background: var(--accent-bright);
+  color: var(--text-inverse);
+}
+
+/* Danger Button */
+.cr-btn-danger {
+  background: var(--danger-dim);
+  color: var(--danger-text);
+  border-color: rgba(217, 79, 92, 0.3);
+}
+
+.cr-btn-danger:hover {
+  background: rgba(217, 79, 92, 0.25);
+  border-color: var(--danger);
+}
+
+/* Panel */
+.cr-panel {
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+/* Input */
+.cr-input {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--surface-1);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.cr-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-glow);
+}
+
+.cr-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+/* Divider */
+.cr-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border-default);
+  flex-shrink: 0;
+}
+
+/* Badge */
+.cr-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 3px;
+  line-height: 1.4;
+}
+
+/* Status indicator dot */
+.cr-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Horizontal scan line effect for loading */
+.cr-scan-loading {
+  position: relative;
+  overflow: hidden;
+}
+
+.cr-scan-loading::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--accent-glow) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: horizontal-scan 2s ease-in-out infinite;
+}
+
+/* Grid pattern background */
+.cr-grid-bg {
+  background-image:
+    linear-gradient(var(--border-subtle) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border-subtle) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Inset groove */
+.cr-inset {
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.4),
+    0 1px 0 var(--border-subtle);
 }

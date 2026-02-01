@@ -42,19 +42,25 @@ export default function AnnotationOverlay({
         annotation.position.rects.map((rect, rectIndex) => {
           const isActive = annotation.id === activeAnnotationId;
           const isHovered = annotation.id === hoveredId;
-          const color = annotation.isHighPriority ? "#ef4444" : "#ffeb3b";
+
+          const color = annotation.isHighPriority
+            ? "var(--highlight-priority-solid)"
+            : "var(--highlight-normal-solid)";
+          const bgColor = annotation.isHighPriority
+            ? "var(--highlight-priority)"
+            : "var(--highlight-normal)";
 
           return (
             <div
               key={`${annotation.id}-${rectIndex}`}
-              className="absolute cursor-pointer transition-opacity duration-150"
+              className="absolute cursor-pointer transition-all duration-150"
               style={{
                 left: rect.x * scale,
                 top: rect.y * scale,
                 width: rect.width * scale,
                 height: rect.height * scale,
-                backgroundColor: color,
-                opacity: isActive ? 0.5 : isHovered ? 0.4 : 0.25,
+                backgroundColor: bgColor,
+                opacity: isActive ? 0.8 : isHovered ? 0.6 : 0.45,
                 border: isActive
                   ? `2px solid ${color}`
                   : "1px solid transparent",
@@ -73,7 +79,7 @@ export default function AnnotationOverlay({
         }),
       )}
 
-      {/* Pending highlight for annotation being created */}
+      {/* Pending highlight */}
       {showPending &&
         pendingHighlight.rects.map((rect, i) => (
           <div
@@ -84,9 +90,9 @@ export default function AnnotationOverlay({
               top: rect.y * scale,
               width: rect.width * scale,
               height: rect.height * scale,
-              backgroundColor: "#ffeb3b",
+              backgroundColor: "var(--highlight-pending)",
               opacity: 0.4,
-              border: "2px solid #ffeb3b",
+              border: "2px solid var(--highlight-pending-solid)",
               borderRadius: 2,
               pointerEvents: "none",
             }}

@@ -8,8 +8,22 @@ import { useUser } from "@/app/hooks/useUser";
 const PDFViewer = dynamic(() => import("@/app/components/PDFViewer"), {
   ssr: false,
   loading: () => (
-    <div className="flex items-center justify-center h-full">
-      <span className="text-gray-500 text-sm">Loading viewer...</span>
+    <div
+      className="flex items-center justify-center h-full"
+      style={{ background: 'var(--surface-0)' }}
+    >
+      <div className="flex items-center gap-2 animate-boot">
+        <div
+          className="cr-status-dot animate-status-blink"
+          style={{ background: 'var(--accent)' }}
+        />
+        <span
+          className="text-xs"
+          style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)' }}
+        >
+          Initializing viewer...
+        </span>
+      </div>
     </div>
   ),
 });
@@ -34,7 +48,7 @@ export default function ViewPage({ params }: PageProps) {
   }, [pdfUrl, router]);
 
   return (
-    <div className="h-screen">
+    <div className="h-screen" style={{ background: 'var(--surface-0)' }}>
       <PDFViewer
         pdfUrl={decodedPdfUrl}
         isAuthenticated={!loading && !!user}

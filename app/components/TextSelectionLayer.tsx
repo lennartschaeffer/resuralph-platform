@@ -38,12 +38,8 @@ export default function TextSelectionLayer({
   currentPage,
   onSelectionComplete,
 }: TextSelectionLayerProps) {
-  const [popupPosition, setPopupPosition] = useState<PopupPosition | null>(
-    null,
-  );
-  const [selectionData, setSelectionData] = useState<SelectionData | null>(
-    null,
-  );
+  const [popupPosition, setPopupPosition] = useState<PopupPosition | null>(null);
+  const [selectionData, setSelectionData] = useState<SelectionData | null>(null);
   const popupRef = useRef<HTMLDivElement>(null);
 
   const clearSelection = useCallback(() => {
@@ -60,7 +56,6 @@ export default function TextSelectionLayer({
     const container = containerRef.current;
     if (!container) return;
 
-    // Check that the selection is within the PDF text layer
     const textLayer = container.querySelector(".react-pdf__Page__textContent");
     if (!textLayer) return;
 
@@ -78,12 +73,10 @@ export default function TextSelectionLayer({
     const selectedText = selection.toString().trim();
     if (!selectedText) return;
 
-    // Get the bounding rects of the selection relative to the page container
     const range = selection.getRangeAt(0);
     const clientRects = range.getClientRects();
     const containerRect = container.getBoundingClientRect();
 
-    // Convert client rects to PDF coordinates (unscaled)
     const pdfRects: AnnotationRect[] = [];
     for (let i = 0; i < clientRects.length; i++) {
       const r = clientRects[i];
@@ -95,7 +88,6 @@ export default function TextSelectionLayer({
       });
     }
 
-    // Merge rects that are on the same line (close y values, overlapping x)
     const mergedRects = mergeRects(pdfRects);
 
     const data: SelectionData = {
@@ -105,7 +97,6 @@ export default function TextSelectionLayer({
     };
     setSelectionData(data);
 
-    // Position the popup near the end of the selection
     const lastRect = clientRects[clientRects.length - 1];
     setPopupPosition({
       x: lastRect.right - containerRect.left + 4,
@@ -122,33 +113,25 @@ export default function TextSelectionLayer({
 
     onSelectionComplete?.(selectionData);
 
-    // Clear the browser selection
     window.getSelection()?.removeAllRanges();
     clearSelection();
   }, [selectionData, onSelectionComplete, clearSelection]);
 
-  // Listen for mouseup on the container
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-
     container.addEventListener("mouseup", handleMouseUp);
     return () => {
       container.removeEventListener("mouseup", handleMouseUp);
     };
   }, [containerRef, handleMouseUp]);
 
-  // Dismiss popup when clicking outside
   useEffect(() => {
     function handleMouseDown(e: MouseEvent) {
-      if (
-        popupRef.current &&
-        !popupRef.current.contains(e.target as Node)
-      ) {
+      if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
         clearSelection();
       }
     }
-
     if (popupPosition) {
       document.addEventListener("mousedown", handleMouseDown);
       return () => document.removeEventListener("mousedown", handleMouseDown);
@@ -160,7 +143,7 @@ export default function TextSelectionLayer({
   return (
     <div
       ref={popupRef}
-      className="absolute z-20 animate-in fade-in duration-150"
+      className="absolute z-20 animate-slide-up"
       style={{
         left: popupPosition.x,
         top: popupPosition.y,
@@ -168,11 +151,16 @@ export default function TextSelectionLayer({
     >
       <button
         onClick={handleAnnotateClick}
-        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md shadow-lg transition-colors whitespace-nowrap"
+        className="cr-btn cr-btn-accent"
+        style={{
+          fontSize: '11px',
+          boxShadow: 'var(--shadow-lg), var(--shadow-glow)',
+          padding: '5px 12px',
+        }}
       >
         <svg
-          width="14"
-          height="14"
+          width="12"
+          height="12"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -200,7 +188,6 @@ function mergeRects(rects: AnnotationRect[]): AnnotationRect[] {
     const current = sorted[i];
     const last = merged[merged.length - 1];
 
-    // If y values are close enough, they're on the same line
     if (Math.abs(current.y - last.y) < last.height * 0.5) {
       const minX = Math.min(last.x, current.x);
       const maxX = Math.max(last.x + last.width, current.x + current.width);
