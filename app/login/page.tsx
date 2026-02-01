@@ -22,34 +22,34 @@ export default async function LoginPage({
   return (
     <div
       className="flex min-h-screen flex-col items-center justify-center px-6 cr-grid-bg"
-      style={{ background: 'var(--surface-0)' }}
+      style={{ background: "var(--surface-0)" }}
     >
       <div
         className="w-full max-w-sm animate-boot"
         style={{
-          background: 'var(--surface-2)',
-          border: '1px solid var(--border-default)',
-          borderRadius: 'var(--radius-lg)',
-          overflow: 'hidden',
+          background: "var(--surface-2)",
+          border: "1px solid var(--border-default)",
+          borderRadius: "var(--radius-lg)",
+          overflow: "hidden",
         }}
       >
         {/* Header strip */}
         <div
           className="flex items-center gap-2 px-5 py-3"
           style={{
-            background: 'var(--surface-3)',
-            borderBottom: '1px solid var(--border-subtle)',
+            background: "var(--surface-3)",
+            borderBottom: "1px solid var(--border-subtle)",
           }}
         >
           <div
             className="cr-status-dot"
-            style={{ background: 'var(--accent)' }}
+            style={{ background: "var(--accent)" }}
           />
           <span
             className="text-[10px] tracking-widest uppercase"
             style={{
-              fontFamily: 'var(--font-mono)',
-              color: 'var(--text-tertiary)',
+              fontFamily: "var(--font-mono)",
+              color: "var(--text-tertiary)",
             }}
           >
             Authentication Required
@@ -64,18 +64,18 @@ export default async function LoginPage({
               width={28}
               height={28}
               className="rounded"
-              style={{ border: '1px solid var(--border-default)' }}
+              style={{ border: "1px solid var(--border-default)" }}
             />
             <div>
               <h1
                 className="text-base font-semibold"
-                style={{ color: 'var(--text-primary)' }}
+                style={{ color: "var(--text-primary)" }}
               >
                 Sign in to ResuRalph
               </h1>
               <p
                 className="text-xs mt-0.5"
-                style={{ color: 'var(--text-tertiary)' }}
+                style={{ color: "var(--text-tertiary)" }}
               >
                 Authenticate to create annotations
               </p>
@@ -86,29 +86,17 @@ export default async function LoginPage({
             <input type="hidden" name="next" value={next ?? "/"} />
             <button
               formAction={signInWithDiscord}
-              className="w-full flex items-center justify-center gap-2.5 py-2.5 rounded transition-all duration-200"
+              className="w-full flex items-center justify-center gap-2.5 py-2.5 rounded transition-all duration-200 cursor-pointer"
               style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: '12px',
+                fontFamily: "var(--font-display)",
+                fontSize: "12px",
                 fontWeight: 500,
-                letterSpacing: '0.03em',
-                textTransform: 'uppercase' as const,
-                background: 'var(--accent-dim)',
-                color: 'var(--accent-bright)',
-                border: '1px solid var(--accent)',
-                borderRadius: 'var(--radius-md)',
-              }}
-              onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
-                const t = e.currentTarget;
-                t.style.background = 'var(--accent)';
-                t.style.color = 'var(--text-primary)';
-                t.style.boxShadow = '0 0 20px var(--accent-glow)';
-              }}
-              onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
-                const t = e.currentTarget;
-                t.style.background = 'var(--accent-dim)';
-                t.style.color = 'var(--accent-bright)';
-                t.style.boxShadow = 'none';
+                letterSpacing: "0.03em",
+                textTransform: "uppercase" as const,
+                background: "var(--accent-dim)",
+                color: "var(--text-primary)",
+                border: "1px solid var(--accent)",
+                borderRadius: "var(--radius-md)",
               }}
             >
               <svg
@@ -126,8 +114,8 @@ export default async function LoginPage({
           <p
             className="text-center mt-5 text-[11px]"
             style={{
-              fontFamily: 'var(--font-mono)',
-              color: 'var(--text-tertiary)',
+              fontFamily: "var(--font-mono)",
+              color: "var(--text-tertiary)",
             }}
           >
             Read-only access available without sign-in
@@ -140,15 +128,9 @@ export default async function LoginPage({
         href="/"
         className="mt-6 text-[11px] transition-colors duration-200"
         style={{
-          fontFamily: 'var(--font-mono)',
-          color: 'var(--text-tertiary)',
-          textDecoration: 'none',
-        }}
-        onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => {
-          e.currentTarget.style.color = 'var(--text-secondary)';
-        }}
-        onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => {
-          e.currentTarget.style.color = 'var(--text-tertiary)';
+          fontFamily: "var(--font-mono)",
+          color: "var(--text-tertiary)",
+          textDecoration: "none",
         }}
       >
         &larr; Back to control panel
