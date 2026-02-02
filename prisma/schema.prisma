@@ -14,13 +14,17 @@ datasource db {
 }
 
 model Document {
-  id          String       @id @default(uuid())
-  s3Key       String       @unique
-  uploader    String
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  annotations Annotation[]
+  id                String       @id @default(uuid())
+  s3Key             String       @unique
+  title             String?
+  uploaderId        String
+  uploaderUsername   String
+  version           Int
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  annotations       Annotation[]
 
+  @@unique([uploaderId, version])
   @@map("documents")
 }
 
