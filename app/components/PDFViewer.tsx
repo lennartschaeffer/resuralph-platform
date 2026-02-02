@@ -6,7 +6,6 @@ import AnnotationOverlay from "./AnnotationOverlay";
 import AnnotationSidebar from "./AnnotationSidebar";
 import TextSelectionLayer from "./TextSelectionLayer";
 import { Annotation, AnnotationRect } from "@/app/types/annotation";
-import { mockAnnotations } from "@/app/data/mockAnnotations";
 
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -25,12 +24,14 @@ type FitMode = "none" | "fit-width" | "fit-page";
 
 interface PDFViewerProps {
   pdfUrl: string;
+  documentId: string;
   isAuthenticated?: boolean;
   onLoginClick: () => void;
 }
 
 export default function PDFViewer({
   pdfUrl,
+  documentId,
   isAuthenticated = false,
   onLoginClick,
 }: PDFViewerProps) {
@@ -42,7 +43,7 @@ export default function PDFViewer({
   const [fitMode, setFitMode] = useState<FitMode>("none");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [annotations, setAnnotations] = useState<Annotation[]>(mockAnnotations);
+  const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [activeAnnotationId, setActiveAnnotationId] = useState<string | null>(
     null,
   );
@@ -55,6 +56,22 @@ export default function PDFViewer({
   const baseViewportRef = useRef<{ width: number; height: number } | null>(
     null,
   );
+
+  // Fetch annotations from API
+  useEffect(() => {
+    async function fetchAnnotations() {
+      try {
+        const res = await fetch(`/api/annotations?documentId=${documentId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setAnnotations(data.annotations);
+        }
+      } catch {
+        // Annotations will remain empty on error
+      }
+    }
+    fetchAnnotations();
+  }, [documentId]);
 
   const handleDocumentLoadSuccess = useCallback(
     ({ numPages }: { numPages: number }) => {
@@ -159,29 +176,79 @@ export default function PDFViewer({
   );
 
   const handleAnnotationCreate = useCallback(
-    (data: {
+    async (data: {
       selectedText: string;
       comment: string;
       isHighPriority: boolean;
       position: { pageNumber: number; rects: AnnotationRect[] };
     }) => {
-      const newAnnotation: Annotation = {
-        id: crypto.randomUUID(),
-        selectedText: data.selectedText,
-        comment: data.comment,
-        position: data.position,
-        isHighPriority: data.isHighPriority,
-        createdAt: new Date(),
-        creatorId: "local-user",
-      };
-      setAnnotations((prev) => [...prev, newAnnotation]);
-      setPendingSelection(null);
+      try {
+        const res = await fetch("/api/annotations", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            documentId,
+            selectedText: data.selectedText,
+            comment: data.comment,
+            positionData: {
+              pageNumber: data.position.pageNumber,
+              rects: data.position.rects,
+            },
+            isHighPriority: data.isHighPriority,
+          }),
+        });
+
+        if (res.ok) {
+          const result = await res.json();
+          setAnnotations((prev) => [...prev, result.annotation]);
+          setPendingSelection(null);
+        }
+      } catch {
+        // Failed to create annotation
+      }
     },
-    [],
+    [documentId],
   );
 
   const handleAnnotationCancel = useCallback(() => {
     setPendingSelection(null);
+  }, []);
+
+  const handleAnnotationUpdate = useCallback(
+    async (id: string, data: { comment?: string; isHighPriority?: boolean }) => {
+      try {
+        const res = await fetch(`/api/annotations/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+
+        if (res.ok) {
+          const result = await res.json();
+          setAnnotations((prev) =>
+            prev.map((a) => (a.id === id ? result.annotation : a)),
+          );
+        }
+      } catch {
+        // Failed to update annotation
+      }
+    },
+    [],
+  );
+
+  const handleAnnotationDelete = useCallback(async (id: string) => {
+    try {
+      const res = await fetch(`/api/annotations/${id}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        setAnnotations((prev) => prev.filter((a) => a.id !== id));
+        setActiveAnnotationId(null);
+      }
+    } catch {
+      // Failed to delete annotation
+    }
   }, []);
 
   if (error) {
@@ -525,6 +592,8 @@ export default function PDFViewer({
           }}
           onAnnotationCreate={handleAnnotationCreate}
           onAnnotationCancel={handleAnnotationCancel}
+          onAnnotationUpdate={handleAnnotationUpdate}
+          onAnnotationDelete={handleAnnotationDelete}
           isAuthenticated={isAuthenticated}
           onLoginClick={onLoginClick}
         />

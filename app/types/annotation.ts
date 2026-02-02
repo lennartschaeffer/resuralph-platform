@@ -12,10 +12,12 @@ export interface AnnotationPosition {
 
 export interface Annotation {
   id: string;
+  documentId: string;
   selectedText: string;
   comment: string;
-  position: AnnotationPosition;
+  positionData: AnnotationPosition;
   isHighPriority: boolean;
-  createdAt: Date;
   creatorId: string;
+  createdAt: string;
+  updatedAt: string;
 }

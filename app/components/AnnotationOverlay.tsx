@@ -28,7 +28,7 @@ export default function AnnotationOverlay({
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   const pageAnnotations = annotations.filter(
-    (a) => a.position.pageNumber === currentPage,
+    (a) => a.positionData.pageNumber === currentPage,
   );
 
   const showPending =
@@ -39,7 +39,7 @@ export default function AnnotationOverlay({
   return (
     <>
       {pageAnnotations.map((annotation) =>
-        annotation.position.rects.map((rect, rectIndex) => {
+        annotation.positionData.rects.map((rect, rectIndex) => {
           const isActive = annotation.id === activeAnnotationId;
           const isHovered = annotation.id === hoveredId;
 

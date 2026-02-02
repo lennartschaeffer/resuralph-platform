@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Annotation, AnnotationRect } from "@/app/types/annotation";
 import AnnotationCreationForm from "./AnnotationCreationForm";
 
@@ -20,6 +21,11 @@ interface AnnotationSidebarProps {
     position: { pageNumber: number; rects: AnnotationRect[] };
   }) => void;
   onAnnotationCancel: () => void;
+  onAnnotationUpdate: (
+    id: string,
+    data: { comment?: string; isHighPriority?: boolean },
+  ) => void;
+  onAnnotationDelete: (id: string) => void;
   isAuthenticated?: boolean;
   onLoginClick: () => void;
 }
@@ -32,17 +38,46 @@ export default function AnnotationSidebar({
   onAnnotationClick,
   onAnnotationCreate,
   onAnnotationCancel,
+  onAnnotationUpdate,
+  onAnnotationDelete,
   isAuthenticated = false,
   onLoginClick,
 }: AnnotationSidebarProps) {
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editComment, setEditComment] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
   const sortedAnnotations = [...annotations].sort((a, b) => {
-    if (a.position.pageNumber !== b.position.pageNumber) {
-      return a.position.pageNumber - b.position.pageNumber;
+    if (a.positionData.pageNumber !== b.positionData.pageNumber) {
+      return a.positionData.pageNumber - b.positionData.pageNumber;
     }
-    const aY = a.position.rects[0]?.y ?? 0;
-    const bY = b.position.rects[0]?.y ?? 0;
+    const aY = a.positionData.rects[0]?.y ?? 0;
+    const bY = b.positionData.rects[0]?.y ?? 0;
     return aY - bY;
   });
+
+  function startEditing(annotation: Annotation) {
+    setEditingId(annotation.id);
+    setEditComment(annotation.comment);
+  }
+
+  function cancelEditing() {
+    setEditingId(null);
+    setEditComment("");
+  }
+
+  function submitEdit(id: string) {
+    const trimmed = editComment.trim();
+    if (!trimmed) return;
+    onAnnotationUpdate(id, { comment: trimmed });
+    setEditingId(null);
+    setEditComment("");
+  }
+
+  function confirmDelete(id: string) {
+    onAnnotationDelete(id);
+    setDeletingId(null);
+  }
 
   return (
     <div
@@ -213,7 +248,9 @@ export default function AnnotationSidebar({
             sortedAnnotations.map((annotation, index) => {
               const isActive = activeAnnotationId === annotation.id;
               const isOnCurrentPage =
-                annotation.position.pageNumber === currentPage;
+                annotation.positionData.pageNumber === currentPage;
+              const isEditing = editingId === annotation.id;
+              const isDeleting = deletingId === annotation.id;
 
               return (
                 <div
@@ -255,7 +292,7 @@ export default function AnnotationSidebar({
                         color: "var(--text-tertiary)",
                       }}
                     >
-                      P{annotation.position.pageNumber}
+                      P{annotation.positionData.pageNumber}
                     </span>
                     {annotation.isHighPriority && (
                       <span
@@ -278,33 +315,153 @@ export default function AnnotationSidebar({
                     &ldquo;{annotation.selectedText}&rdquo;
                   </p>
 
-                  {/* Comment */}
-                  <p
-                    className="text-xs line-clamp-3 leading-relaxed"
-                    style={{ color: "var(--text-secondary)" }}
-                  >
-                    {annotation.comment}
-                  </p>
+                  {/* Comment — editable or static */}
+                  {isEditing ? (
+                    <div
+                      className="space-y-2"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <textarea
+                        value={editComment}
+                        onChange={(e) => setEditComment(e.target.value)}
+                        rows={3}
+                        className="cr-input w-full resize-none"
+                        style={{ fontSize: "12px", lineHeight: "1.5" }}
+                        autoFocus
+                      />
+                      <div className="flex items-center gap-2 justify-end">
+                        <button
+                          onClick={cancelEditing}
+                          className="cr-btn"
+                          style={{ fontSize: "10px" }}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => submitEdit(annotation.id)}
+                          className="cr-btn cr-btn-accent"
+                          style={{ fontSize: "10px" }}
+                        >
+                          Save
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p
+                      className="text-xs line-clamp-3 leading-relaxed"
+                      style={{ color: "var(--text-secondary)" }}
+                    >
+                      {annotation.comment}
+                    </p>
+                  )}
 
-                  {/* Timestamp */}
-                  <p
-                    className="text-[10px] mt-2"
-                    style={{
-                      fontFamily: "var(--font-mono)",
-                      color: "var(--text-tertiary)",
-                      opacity: 0.7,
-                    }}
-                  >
-                    {new Date(annotation.createdAt).toLocaleDateString(
-                      "en-US",
-                      {
-                        month: "short",
-                        day: "numeric",
-                        hour: "numeric",
-                        minute: "2-digit",
-                      },
+                  {/* Delete confirmation */}
+                  {isDeleting && (
+                    <div
+                      className="mt-2 p-2 rounded space-y-2"
+                      style={{
+                        background: "var(--danger-dim)",
+                        border: "1px solid var(--danger)",
+                        borderRadius: "var(--radius-sm)",
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <p
+                        className="text-[11px]"
+                        style={{ color: "var(--danger-text)" }}
+                      >
+                        Delete this annotation?
+                      </p>
+                      <div className="flex items-center gap-2 justify-end">
+                        <button
+                          onClick={() => setDeletingId(null)}
+                          className="cr-btn"
+                          style={{ fontSize: "10px" }}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => confirmDelete(annotation.id)}
+                          className="cr-btn"
+                          style={{
+                            fontSize: "10px",
+                            background: "var(--danger)",
+                            color: "#fff",
+                            borderColor: "var(--danger)",
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Timestamp + actions */}
+                  <div className="flex items-center justify-between mt-2">
+                    <p
+                      className="text-[10px]"
+                      style={{
+                        fontFamily: "var(--font-mono)",
+                        color: "var(--text-tertiary)",
+                        opacity: 0.7,
+                      }}
+                    >
+                      {new Date(annotation.createdAt).toLocaleDateString(
+                        "en-US",
+                        {
+                          month: "short",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                        },
+                      )}
+                    </p>
+
+                    {/* Edit/Delete buttons — only for authenticated users */}
+                    {isAuthenticated && !isEditing && !isDeleting && (
+                      <div
+                        className="flex items-center gap-1"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <button
+                          onClick={() => startEditing(annotation)}
+                          className="cr-btn"
+                          style={{ padding: "2px 6px", fontSize: "10px" }}
+                          title="Edit"
+                        >
+                          <svg
+                            width="10"
+                            height="10"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          >
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => setDeletingId(annotation.id)}
+                          className="cr-btn"
+                          style={{ padding: "2px 6px", fontSize: "10px" }}
+                          title="Delete"
+                        >
+                          <svg
+                            width="10"
+                            height="10"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          >
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                          </svg>
+                        </button>
+                      </div>
                     )}
-                  </p>
+                  </div>
                 </div>
               );
             })
