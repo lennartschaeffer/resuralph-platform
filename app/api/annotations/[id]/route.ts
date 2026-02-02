@@ -18,7 +18,8 @@ export async function GET(
     }
 
     return NextResponse.json({ annotation });
-  } catch {
+  } catch (error) {
+    console.error(`Failed to fetch annotation ${id}:`, error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -99,7 +100,8 @@ export async function PATCH(
     });
 
     return NextResponse.json({ annotation: updated });
-  } catch {
+  } catch (error) {
+    console.error(`Failed to update annotation ${id}:`, error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -138,7 +140,8 @@ export async function DELETE(
     await prisma.annotation.delete({ where: { id } });
 
     return NextResponse.json({ message: "Annotation deleted" });
-  } catch {
+  } catch (error) {
+    console.error(`Failed to delete annotation ${id}:`, error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

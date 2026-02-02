@@ -32,7 +32,8 @@ export async function GET(
     const url = await getSignedUrl(s3, command, { expiresIn: 900 }); // 15 minutes
 
     return NextResponse.json({ url });
-  } catch {
+  } catch (error) {
+    console.error(`Failed to generate signed URL for document ${id}:`, error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },

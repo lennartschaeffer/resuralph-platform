@@ -28,7 +28,8 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({ annotations });
-  } catch {
+  } catch (error) {
+    console.error(`Failed to fetch annotations for document ${documentId}:`, error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -147,7 +148,8 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({ annotation }, { status: 201 });
-  } catch {
+  } catch (error) {
+    console.error("Failed to create annotation:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
