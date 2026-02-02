@@ -6,6 +6,7 @@ import AnnotationOverlay from "./AnnotationOverlay";
 import AnnotationSidebar from "./AnnotationSidebar";
 import TextSelectionLayer from "./TextSelectionLayer";
 import { Annotation, AnnotationRect } from "@/app/types/annotation";
+import { useUser } from "@/app/hooks/useUser";
 
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -35,6 +36,10 @@ export default function PDFViewer({
   isAuthenticated = false,
   onLoginClick,
 }: PDFViewerProps) {
+  const { user } = useUser();
+  const userName = user?.user_metadata?.full_name || user?.user_metadata?.name;
+  const avatarUrl = user?.user_metadata?.avatar_url;
+
   const containerRef = useRef<HTMLDivElement>(null);
   const pageWrapperRef = useRef<HTMLDivElement>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -298,7 +303,7 @@ export default function PDFViewer({
       <div className="flex flex-col flex-1 h-full lg:h-auto">
         {/* ── Control Bar ── */}
         <div
-          className="flex items-center justify-between px-3 py-1.5 shrink-0 animate-boot"
+          className="flex items-center justify-between px-4 py-2.5 shrink-0 animate-boot"
           style={{
             background: "var(--surface-1)",
             borderBottom: "1px solid var(--border-subtle)",
@@ -309,11 +314,11 @@ export default function PDFViewer({
             <button
               onClick={onLoginClick}
               className="cr-btn cr-btn-accent"
-              style={{ fontSize: "10px" }}
+              style={{ fontSize: "13px", padding: "6px 12px" }}
             >
               <svg
-                width="12"
-                height="12"
+                width="16"
+                height="16"
                 viewBox="0 0 24 24"
                 fill="currentColor"
               >
@@ -325,18 +330,49 @@ export default function PDFViewer({
 
           {isAuthenticated && (
             <div className="flex items-center gap-1.5">
-              <div
-                className="cr-status-dot"
-                style={{ background: "var(--success)" }}
-              />
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt={userName || "User"}
+                  className="rounded-full"
+                  style={{
+                    width: "26px",
+                    height: "26px",
+                    border: "1px solid var(--border-subtle)",
+                  }}
+                />
+              ) : (
+                <div
+                  className="rounded-full flex items-center justify-center"
+                  style={{
+                    width: "26px",
+                    height: "26px",
+                    fontSize: "11px",
+                    fontWeight: 600,
+                    background: "var(--accent-glow)",
+                    color: "var(--accent-bright)",
+                    border: "1px solid var(--accent)",
+                    fontFamily: "var(--font-mono)",
+                  }}
+                >
+                  {userName
+                    ? userName
+                        .split(" ")
+                        .map((w: string) => w[0])
+                        .join("")
+                        .toUpperCase()
+                        .slice(0, 2)
+                    : "?"}
+                </div>
+              )}
               <span
-                className="text-[10px] tracking-wider uppercase"
+                className="text-[13px] tracking-wider uppercase"
                 style={{
                   fontFamily: "var(--font-mono)",
                   color: "var(--text-tertiary)",
                 }}
               >
-                Write Access
+                {userName || "User"}
               </span>
             </div>
           )}
@@ -347,12 +383,12 @@ export default function PDFViewer({
               onClick={goToPreviousPage}
               disabled={currentPage <= 1 || isLoading}
               className="cr-btn"
-              style={{ padding: "4px 8px" }}
+              style={{ padding: "6px 10px" }}
               title="Previous page"
             >
               <svg
-                width="14"
-                height="14"
+                width="18"
+                height="18"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -374,10 +410,10 @@ export default function PDFViewer({
                 onChange={handlePageInputChange}
                 disabled={isLoading || totalPages === 0}
                 className="cr-input text-center"
-                style={{ width: "40px", padding: "3px 4px", fontSize: "11px" }}
+                style={{ width: "48px", padding: "5px 6px", fontSize: "14px" }}
               />
               <span
-                className="text-[11px]"
+                className="text-[14px]"
                 style={{ color: "var(--text-tertiary)" }}
               >
                 / {totalPages}
@@ -388,12 +424,12 @@ export default function PDFViewer({
               onClick={goToNextPage}
               disabled={currentPage >= totalPages || isLoading}
               className="cr-btn"
-              style={{ padding: "4px 8px" }}
+              style={{ padding: "6px 10px" }}
               title="Next page"
             >
               <svg
-                width="14"
-                height="14"
+                width="18"
+                height="18"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -410,12 +446,12 @@ export default function PDFViewer({
               onClick={zoomOut}
               disabled={scale <= MIN_SCALE || isLoading}
               className="cr-btn"
-              style={{ padding: "4px 8px" }}
+              style={{ padding: "6px 10px" }}
               title="Zoom out"
             >
               <svg
-                width="14"
-                height="14"
+                width="18"
+                height="18"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -433,9 +469,9 @@ export default function PDFViewer({
               }}
               className="cr-input"
               style={{
-                padding: "3px 6px",
-                fontSize: "11px",
-                minWidth: "64px",
+                padding: "5px 8px",
+                fontSize: "14px",
+                minWidth: "76px",
                 cursor: "pointer",
               }}
             >
@@ -453,12 +489,12 @@ export default function PDFViewer({
               onClick={zoomIn}
               disabled={scale >= MAX_SCALE || isLoading}
               className="cr-btn"
-              style={{ padding: "4px 8px" }}
+              style={{ padding: "6px 10px" }}
               title="Zoom in"
             >
               <svg
-                width="14"
-                height="14"
+                width="18"
+                height="18"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"

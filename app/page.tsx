@@ -142,43 +142,11 @@ export default function Home() {
               className="text-sm leading-relaxed max-w-md"
               style={{ color: "var(--text-secondary)" }}
             >
-              Open any resume PDF to begin reviewing. Select text to create
-              annotations. Authenticate via Discord for write access.
+              ResuRalph is Discord bot built to streamline resume reviews. You
+              upload your resume to the bot, and it generates a shareable link
+              for reviewers to annotate directly on the document.
             </p>
           </div>
-
-          {/* ── PDF URL Input ── */}
-          <form
-            onSubmit={handleOpenPdf}
-            className={`mb-6 ${mounted ? "animate-boot-delay-2" : "opacity-0"}`}
-          >
-            <label
-              className="block mb-2 text-[10px] tracking-widest uppercase"
-              style={{
-                fontFamily: "var(--font-mono)",
-                color: "var(--text-tertiary)",
-              }}
-            >
-              PDF Target URL
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="url"
-                value={pdfInput}
-                onChange={(e) => setPdfInput(e.target.value)}
-                placeholder="https://example.com/resume.pdf"
-                className="cr-input flex-1"
-                style={{ fontSize: "13px" }}
-              />
-              <button
-                type="submit"
-                className="cr-btn cr-btn-accent"
-                disabled={!pdfInput.trim()}
-              >
-                Open
-              </button>
-            </div>
-          </form>
 
           {/* ── Divider with label ── */}
           <div

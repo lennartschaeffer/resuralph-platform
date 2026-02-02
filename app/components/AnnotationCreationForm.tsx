@@ -95,7 +95,7 @@ export default function AnnotationCreationForm({
             borderRadius: 'var(--radius-sm)',
           }}
         >
-          <p className="text-[11px] italic" style={{ color: 'var(--text-tertiary)' }}>
+          <p className="text-[14px] italic" style={{ color: 'var(--text-tertiary)' }}>
             &ldquo;
             {shouldTruncate && !isTextExpanded
               ? displayText.slice(0, 120) + "..."
@@ -106,7 +106,7 @@ export default function AnnotationCreationForm({
             <button
               type="button"
               onClick={() => setIsTextExpanded(!isTextExpanded)}
-              className="text-[10px] mt-1 transition-colors duration-150"
+              className="text-[13px] mt-1 transition-colors duration-150"
               style={{
                 fontFamily: 'var(--font-mono)',
                 color: 'var(--accent-bright)',
@@ -133,10 +133,10 @@ export default function AnnotationCreationForm({
             placeholder="Add your comment..."
             rows={3}
             className="cr-input w-full resize-none"
-            style={{ fontSize: '12px', lineHeight: '1.5' }}
+            style={{ fontSize: '14px', lineHeight: '1.5' }}
           />
           {error && (
-            <p className="text-[10px] mt-1" style={{ color: 'var(--danger-text)' }}>
+            <p className="text-[13px] mt-1" style={{ color: 'var(--danger-text)' }}>
               {error}
             </p>
           )}
@@ -148,11 +148,11 @@ export default function AnnotationCreationForm({
             type="checkbox"
             checked={isHighPriority}
             onChange={(e) => setIsHighPriority(e.target.checked)}
-            className="w-3.5 h-3.5 rounded accent-red-500"
+            className="w-4 h-4 rounded accent-red-500"
             style={{ accentColor: 'var(--danger)' }}
           />
           <span
-            className="text-[11px] font-medium"
+            className="text-[14px] font-medium"
             style={{
               fontFamily: 'var(--font-mono)',
               color: isHighPriority ? 'var(--danger-text)' : 'var(--text-tertiary)',
@@ -165,10 +165,10 @@ export default function AnnotationCreationForm({
 
         {/* Actions */}
         <div className="flex items-center gap-2 justify-end">
-          <button type="button" onClick={onCancel} className="cr-btn" style={{ fontSize: '10px' }}>
+          <button type="button" onClick={onCancel} className="cr-btn" style={{ fontSize: '13px', padding: '6px 12px' }}>
             Cancel
           </button>
-          <button type="submit" className="cr-btn cr-btn-accent" style={{ fontSize: '10px' }}>
+          <button type="submit" className="cr-btn cr-btn-accent" style={{ fontSize: '13px', padding: '6px 12px' }}>
             Add Annotation
           </button>
         </div>

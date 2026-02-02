@@ -91,8 +91,8 @@ export default function AnnotationSidebar({
       >
         <div className="flex items-center gap-2">
           <svg
-            width="14"
-            height="14"
+            width="18"
+            height="18"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -102,7 +102,7 @@ export default function AnnotationSidebar({
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>
           <span
-            className="text-[11px] font-semibold tracking-wider uppercase"
+            className="text-[14px] font-semibold tracking-wider uppercase"
             style={{
               fontFamily: "var(--font-display)",
               color: "var(--text-secondary)",
@@ -140,13 +140,13 @@ export default function AnnotationSidebar({
             }}
           >
             <p
-              className="text-xs font-medium"
+              className="text-sm font-medium"
               style={{ color: "var(--text-secondary)" }}
             >
               Sign in to annotate
             </p>
             <p
-              className="text-[11px]"
+              className="text-[14px]"
               style={{ color: "var(--text-tertiary)" }}
             >
               &ldquo;
@@ -159,11 +159,11 @@ export default function AnnotationSidebar({
               <button
                 onClick={onLoginClick}
                 className="cr-btn cr-btn-accent"
-                style={{ fontSize: "10px" }}
+                style={{ fontSize: "13px", padding: "6px 12px" }}
               >
                 <svg
-                  width="12"
-                  height="12"
+                  width="16"
+                  height="16"
                   viewBox="0 0 24 24"
                   fill="currentColor"
                 >
@@ -174,7 +174,7 @@ export default function AnnotationSidebar({
               <button
                 onClick={onAnnotationCancel}
                 className="cr-btn"
-                style={{ fontSize: "10px" }}
+                style={{ fontSize: "13px", padding: "6px 12px" }}
               >
                 Cancel
               </button>
@@ -188,8 +188,8 @@ export default function AnnotationSidebar({
           {sortedAnnotations.length === 0 ? (
             <div className="text-center py-12">
               <svg
-                width="24"
-                height="24"
+                width="30"
+                height="30"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -200,7 +200,7 @@ export default function AnnotationSidebar({
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
               </svg>
               <p
-                className="text-xs"
+                className="text-sm"
                 style={{
                   fontFamily: "var(--font-mono)",
                   color: "var(--text-tertiary)",
@@ -210,7 +210,7 @@ export default function AnnotationSidebar({
               </p>
               {isAuthenticated ? (
                 <p
-                  className="text-[10px] mt-1"
+                  className="text-[13px] mt-1"
                   style={{ color: "var(--text-tertiary)", opacity: 0.6 }}
                 >
                   Select text in the PDF to create one
@@ -218,7 +218,7 @@ export default function AnnotationSidebar({
               ) : (
                 <div className="mt-3">
                   <p
-                    className="text-[10px] mb-2"
+                    className="text-[13px] mb-2"
                     style={{
                       fontFamily: "var(--font-mono)",
                       color: "var(--text-tertiary)",
@@ -229,11 +229,11 @@ export default function AnnotationSidebar({
                   <button
                     onClick={onLoginClick}
                     className="cr-btn cr-btn-accent"
-                    style={{ fontSize: "10px" }}
+                    style={{ fontSize: "13px", padding: "6px 12px" }}
                   >
                     <svg
-                      width="12"
-                      height="12"
+                      width="16"
+                      height="16"
                       viewBox="0 0 24 24"
                       fill="currentColor"
                     >
@@ -264,7 +264,7 @@ export default function AnnotationSidebar({
                       : "var(--surface-2)",
                     border: `1px solid ${isActive ? "var(--accent)" : "var(--border-subtle)"}`,
                     borderRadius: "var(--radius-md)",
-                    padding: "10px 12px",
+                    padding: "13px 16px",
                     boxShadow: isActive ? "var(--shadow-glow)" : "none",
                     opacity: isOnCurrentPage ? 1 : 0.6,
                   }}
@@ -309,7 +309,7 @@ export default function AnnotationSidebar({
 
                   {/* Selected text */}
                   <p
-                    className="text-[11px] italic mb-1.5 line-clamp-2"
+                    className="text-[14px] italic mb-1.5 line-clamp-2"
                     style={{ color: "var(--text-tertiary)" }}
                   >
                     &ldquo;{annotation.selectedText}&rdquo;
@@ -326,21 +326,21 @@ export default function AnnotationSidebar({
                         onChange={(e) => setEditComment(e.target.value)}
                         rows={3}
                         className="cr-input w-full resize-none"
-                        style={{ fontSize: "12px", lineHeight: "1.5" }}
+                        style={{ fontSize: "14px", lineHeight: "1.5" }}
                         autoFocus
                       />
                       <div className="flex items-center gap-2 justify-end">
                         <button
                           onClick={cancelEditing}
                           className="cr-btn"
-                          style={{ fontSize: "10px" }}
+                          style={{ fontSize: "13px", padding: "5px 10px" }}
                         >
                           Cancel
                         </button>
                         <button
                           onClick={() => submitEdit(annotation.id)}
                           className="cr-btn cr-btn-accent"
-                          style={{ fontSize: "10px" }}
+                          style={{ fontSize: "13px", padding: "5px 10px" }}
                         >
                           Save
                         </button>
@@ -348,7 +348,7 @@ export default function AnnotationSidebar({
                     </div>
                   ) : (
                     <p
-                      className="text-xs line-clamp-3 leading-relaxed"
+                      className="text-sm line-clamp-3 leading-relaxed"
                       style={{ color: "var(--text-secondary)" }}
                     >
                       {annotation.comment}
@@ -367,7 +367,7 @@ export default function AnnotationSidebar({
                       onClick={(e) => e.stopPropagation()}
                     >
                       <p
-                        className="text-[11px]"
+                        className="text-[14px]"
                         style={{ color: "var(--danger-text)" }}
                       >
                         Delete this annotation?
@@ -376,7 +376,7 @@ export default function AnnotationSidebar({
                         <button
                           onClick={() => setDeletingId(null)}
                           className="cr-btn"
-                          style={{ fontSize: "10px" }}
+                          style={{ fontSize: "13px", padding: "5px 10px" }}
                         >
                           Cancel
                         </button>
@@ -384,7 +384,8 @@ export default function AnnotationSidebar({
                           onClick={() => confirmDelete(annotation.id)}
                           className="cr-btn"
                           style={{
-                            fontSize: "10px",
+                            fontSize: "13px",
+                            padding: "5px 10px",
                             background: "var(--danger)",
                             color: "#fff",
                             borderColor: "var(--danger)",
@@ -399,7 +400,7 @@ export default function AnnotationSidebar({
                   {/* Timestamp + actions */}
                   <div className="flex items-center justify-between mt-2">
                     <p
-                      className="text-[10px]"
+                      className="text-[13px]"
                       style={{
                         fontFamily: "var(--font-mono)",
                         color: "var(--text-tertiary)",
@@ -426,12 +427,12 @@ export default function AnnotationSidebar({
                         <button
                           onClick={() => startEditing(annotation)}
                           className="cr-btn"
-                          style={{ padding: "2px 6px", fontSize: "10px" }}
+                          style={{ padding: "4px 8px", fontSize: "13px" }}
                           title="Edit"
                         >
                           <svg
-                            width="10"
-                            height="10"
+                            width="14"
+                            height="14"
                             viewBox="0 0 24 24"
                             fill="none"
                             stroke="currentColor"
@@ -444,12 +445,12 @@ export default function AnnotationSidebar({
                         <button
                           onClick={() => setDeletingId(annotation.id)}
                           className="cr-btn"
-                          style={{ padding: "2px 6px", fontSize: "10px" }}
+                          style={{ padding: "4px 8px", fontSize: "13px" }}
                           title="Delete"
                         >
                           <svg
-                            width="10"
-                            height="10"
+                            width="14"
+                            height="14"
                             viewBox="0 0 24 24"
                             fill="none"
                             stroke="currentColor"
