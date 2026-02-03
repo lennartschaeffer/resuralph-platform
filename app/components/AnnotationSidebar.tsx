@@ -28,6 +28,10 @@ interface AnnotationSidebarProps {
   onAnnotationDelete: (id: string) => void;
   isAuthenticated?: boolean;
   onLoginClick: () => void;
+  isFetchingAnnotations?: boolean;
+  isCreating?: boolean;
+  isUpdating?: boolean;
+  isDeleting?: boolean;
 }
 
 export default function AnnotationSidebar({
@@ -42,6 +46,10 @@ export default function AnnotationSidebar({
   onAnnotationDelete,
   isAuthenticated = false,
   onLoginClick,
+  isFetchingAnnotations = false,
+  isCreating = false,
+  isUpdating = false,
+  isDeleting: isDeletingAnnotation = false,
 }: AnnotationSidebarProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editComment, setEditComment] = useState("");
@@ -130,6 +138,7 @@ export default function AnnotationSidebar({
             selectionData={pendingSelection}
             onSubmit={onAnnotationCreate}
             onCancel={onAnnotationCancel}
+            isLoading={isCreating}
           />
         ) : (
           <div
@@ -185,7 +194,25 @@ export default function AnnotationSidebar({
       {/* ── Annotation List ── */}
       <div className="flex-1 overflow-y-auto">
         <div className="p-3 space-y-2">
-          {sortedAnnotations.length === 0 ? (
+          {isFetchingAnnotations ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="flex items-center gap-2">
+                <div
+                  className="cr-status-dot animate-status-blink"
+                  style={{ background: "var(--accent)" }}
+                />
+                <span
+                  className="text-xs"
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    color: "var(--text-tertiary)",
+                  }}
+                >
+                  Loading annotations...
+                </span>
+              </div>
+            </div>
+          ) : sortedAnnotations.length === 0 ? (
             <div className="text-center py-12">
               <svg
                 width="30"
@@ -332,6 +359,7 @@ export default function AnnotationSidebar({
                       <div className="flex items-center gap-2 justify-end">
                         <button
                           onClick={cancelEditing}
+                          disabled={isUpdating}
                           className="cr-btn"
                           style={{ fontSize: "13px", padding: "5px 10px" }}
                         >
@@ -339,10 +367,15 @@ export default function AnnotationSidebar({
                         </button>
                         <button
                           onClick={() => submitEdit(annotation.id)}
+                          disabled={isUpdating}
                           className="cr-btn cr-btn-accent"
-                          style={{ fontSize: "13px", padding: "5px 10px" }}
+                          style={{
+                            fontSize: "13px",
+                            padding: "5px 10px",
+                            opacity: isUpdating ? 0.7 : 1,
+                          }}
                         >
-                          Save
+                          {isUpdating ? "Saving..." : "Save"}
                         </button>
                       </div>
                     </div>
@@ -375,6 +408,7 @@ export default function AnnotationSidebar({
                       <div className="flex items-center gap-2 justify-end">
                         <button
                           onClick={() => setDeletingId(null)}
+                          disabled={isDeletingAnnotation}
                           className="cr-btn"
                           style={{ fontSize: "13px", padding: "5px 10px" }}
                         >
@@ -382,6 +416,7 @@ export default function AnnotationSidebar({
                         </button>
                         <button
                           onClick={() => confirmDelete(annotation.id)}
+                          disabled={isDeletingAnnotation}
                           className="cr-btn"
                           style={{
                             fontSize: "13px",
@@ -389,9 +424,10 @@ export default function AnnotationSidebar({
                             background: "var(--danger)",
                             color: "#fff",
                             borderColor: "var(--danger)",
+                            opacity: isDeletingAnnotation ? 0.7 : 1,
                           }}
                         >
-                          Delete
+                          {isDeletingAnnotation ? "Deleting..." : "Delete"}
                         </button>
                       </div>
                     </div>

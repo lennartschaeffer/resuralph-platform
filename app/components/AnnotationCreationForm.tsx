@@ -18,12 +18,14 @@ interface AnnotationCreationFormProps {
     position: { pageNumber: number; rects: AnnotationRect[] };
   }) => void;
   onCancel: () => void;
+  isLoading?: boolean;
 }
 
 export default function AnnotationCreationForm({
   selectionData,
   onSubmit,
   onCancel,
+  isLoading = false,
 }: AnnotationCreationFormProps) {
   const [comment, setComment] = useState("");
   const [isHighPriority, setIsHighPriority] = useState(false);
@@ -165,11 +167,22 @@ export default function AnnotationCreationForm({
 
         {/* Actions */}
         <div className="flex items-center gap-2 justify-end">
-          <button type="button" onClick={onCancel} className="cr-btn" style={{ fontSize: '13px', padding: '6px 12px' }}>
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={isLoading}
+            className="cr-btn"
+            style={{ fontSize: '13px', padding: '6px 12px' }}
+          >
             Cancel
           </button>
-          <button type="submit" className="cr-btn cr-btn-accent" style={{ fontSize: '13px', padding: '6px 12px' }}>
-            Add Annotation
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="cr-btn cr-btn-accent"
+            style={{ fontSize: '13px', padding: '6px 12px', opacity: isLoading ? 0.7 : 1 }}
+          >
+            {isLoading ? 'Saving...' : 'Add Annotation'}
           </button>
         </div>
       </form>

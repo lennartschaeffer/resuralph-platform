@@ -1,12 +1,19 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import AnnotationOverlay from "./AnnotationOverlay";
 import AnnotationSidebar from "./AnnotationSidebar";
 import TextSelectionLayer from "./TextSelectionLayer";
-import { Annotation, AnnotationRect } from "@/app/types/annotation";
+import { AnnotationRect } from "@/app/types/annotation";
 import { useUser } from "@/app/hooks/useUser";
+import { useZoom, ZOOM_PRESETS } from "@/app/hooks/useZoom";
+import {
+  useAnnotations,
+  useCreateAnnotation,
+  useUpdateAnnotation,
+  useDeleteAnnotation,
+} from "@/app/hooks/useAnnotations";
 
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -15,13 +22,6 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
   import.meta.url,
 ).toString();
-
-const MIN_SCALE = 0.25;
-const MAX_SCALE = 5.0;
-const ZOOM_STEP = 0.25;
-const ZOOM_PRESETS = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 3.0];
-
-type FitMode = "none" | "fit-width" | "fit-page";
 
 interface PDFViewerProps {
   pdfUrl: string;
@@ -44,11 +44,8 @@ export default function PDFViewer({
   const pageWrapperRef = useRef<HTMLDivElement>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
-  const [scale, setScale] = useState(1.5);
-  const [fitMode, setFitMode] = useState<FitMode>("none");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [activeAnnotationId, setActiveAnnotationId] = useState<string | null>(
     null,
   );
@@ -58,25 +55,45 @@ export default function PDFViewer({
     pageNumber: number;
   } | null>(null);
 
-  const baseViewportRef = useRef<{ width: number; height: number } | null>(
-    null,
-  );
+  const {
+    annotations,
+    setAnnotations,
+    error: fetchAnnotationsError,
+    isLoading: isFetchingAnnotations,
+  } = useAnnotations(documentId);
+  const {
+    createAnnotation,
+    error: createError,
+    isLoading: isCreating,
+  } = useCreateAnnotation();
+  const {
+    updateAnnotation,
+    error: updateError,
+    isLoading: isUpdating,
+  } = useUpdateAnnotation();
+  const {
+    deleteAnnotation,
+    error: deleteError,
+    isLoading: isDeleting,
+  } = useDeleteAnnotation();
 
-  // Fetch annotations from API
-  useEffect(() => {
-    async function fetchAnnotations() {
-      try {
-        const res = await fetch(`/api/annotations?documentId=${documentId}`);
-        if (res.ok) {
-          const data = await res.json();
-          setAnnotations(data.annotations);
-        }
-      } catch {
-        // Annotations will remain empty on error
-      }
-    }
-    fetchAnnotations();
-  }, [documentId]);
+  // Combine annotation operation errors for display
+  const annotationError =
+    fetchAnnotationsError || createError || updateError || deleteError;
+
+  const {
+    scale,
+    fitMode,
+    zoomPercentage,
+    zoomIn,
+    zoomOut,
+    setZoomPreset,
+    fitToWidth,
+    fitToPage,
+    setBaseViewport,
+    canZoomIn,
+    canZoomOut,
+  } = useZoom({ containerRef });
 
   const handleDocumentLoadSuccess = useCallback(
     ({ numPages }: { numPages: number }) => {
@@ -95,68 +112,10 @@ export default function PDFViewer({
 
   const handlePageLoadSuccess = useCallback(
     (page: { originalWidth: number; originalHeight: number }) => {
-      baseViewportRef.current = {
-        width: page.originalWidth,
-        height: page.originalHeight,
-      };
+      setBaseViewport(page.originalWidth, page.originalHeight);
     },
-    [],
+    [setBaseViewport],
   );
-
-  const calculateFitScale = useCallback((mode: FitMode) => {
-    if (mode === "none" || !containerRef.current || !baseViewportRef.current) {
-      return null;
-    }
-    const container = containerRef.current;
-    const padding = 32;
-    const availableWidth = container.clientWidth - padding;
-    const availableHeight = container.clientHeight - padding;
-    const { width: pageWidth, height: pageHeight } = baseViewportRef.current;
-
-    if (mode === "fit-width") {
-      return Math.min(availableWidth / pageWidth, MAX_SCALE);
-    }
-    const scaleX = availableWidth / pageWidth;
-    const scaleY = availableHeight / pageHeight;
-    return Math.min(scaleX, scaleY, MAX_SCALE);
-  }, []);
-
-  useEffect(() => {
-    if (fitMode === "none") return;
-    function handleResize() {
-      const newScale = calculateFitScale(fitMode);
-      if (newScale !== null) setScale(newScale);
-    }
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [fitMode, calculateFitScale]);
-
-  function zoomIn() {
-    setFitMode("none");
-    setScale((prev) => Math.min(prev + ZOOM_STEP, MAX_SCALE));
-  }
-
-  function zoomOut() {
-    setFitMode("none");
-    setScale((prev) => Math.max(prev - ZOOM_STEP, MIN_SCALE));
-  }
-
-  function setZoomPreset(value: number) {
-    setFitMode("none");
-    setScale(value);
-  }
-
-  function fitToWidth() {
-    setFitMode("fit-width");
-    const newScale = calculateFitScale("fit-width");
-    if (newScale !== null) setScale(newScale);
-  }
-
-  function fitToPage() {
-    setFitMode("fit-page");
-    const newScale = calculateFitScale("fit-page");
-    if (newScale !== null) setScale(newScale);
-  }
 
   function goToPreviousPage() {
     setCurrentPage((prev) => Math.max(1, prev - 1));
@@ -187,32 +146,22 @@ export default function PDFViewer({
       isHighPriority: boolean;
       position: { pageNumber: number; rects: AnnotationRect[] };
     }) => {
-      try {
-        const res = await fetch("/api/annotations", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            documentId,
-            selectedText: data.selectedText,
-            comment: data.comment,
-            positionData: {
-              pageNumber: data.position.pageNumber,
-              rects: data.position.rects,
-            },
-            isHighPriority: data.isHighPriority,
-          }),
-        });
-
-        if (res.ok) {
-          const result = await res.json();
-          setAnnotations((prev) => [...prev, result.annotation]);
-          setPendingSelection(null);
-        }
-      } catch {
-        // Failed to create annotation
+      const annotation = await createAnnotation({
+        documentId,
+        selectedText: data.selectedText,
+        comment: data.comment,
+        positionData: {
+          pageNumber: data.position.pageNumber,
+          rects: data.position.rects,
+        },
+        isHighPriority: data.isHighPriority,
+      });
+      if (annotation) {
+        setAnnotations((prev) => [...prev, annotation]);
+        setPendingSelection(null);
       }
     },
-    [documentId],
+    [documentId, createAnnotation, setAnnotations],
   );
 
   const handleAnnotationCancel = useCallback(() => {
@@ -220,41 +169,28 @@ export default function PDFViewer({
   }, []);
 
   const handleAnnotationUpdate = useCallback(
-    async (id: string, data: { comment?: string; isHighPriority?: boolean }) => {
-      try {
-        const res = await fetch(`/api/annotations/${id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        });
-
-        if (res.ok) {
-          const result = await res.json();
-          setAnnotations((prev) =>
-            prev.map((a) => (a.id === id ? result.annotation : a)),
-          );
-        }
-      } catch {
-        // Failed to update annotation
+    async (
+      id: string,
+      data: { comment?: string; isHighPriority?: boolean },
+    ) => {
+      const updated = await updateAnnotation(id, data);
+      if (updated) {
+        setAnnotations((prev) => prev.map((a) => (a.id === id ? updated : a)));
       }
     },
-    [],
+    [updateAnnotation, setAnnotations],
   );
 
-  const handleAnnotationDelete = useCallback(async (id: string) => {
-    try {
-      const res = await fetch(`/api/annotations/${id}`, {
-        method: "DELETE",
-      });
-
-      if (res.ok) {
+  const handleAnnotationDelete = useCallback(
+    async (id: string) => {
+      const success = await deleteAnnotation(id);
+      if (success) {
         setAnnotations((prev) => prev.filter((a) => a.id !== id));
         setActiveAnnotationId(null);
       }
-    } catch {
-      // Failed to delete annotation
-    }
-  }, []);
+    },
+    [deleteAnnotation, setAnnotations],
+  );
 
   if (error) {
     return (
@@ -291,8 +227,6 @@ export default function PDFViewer({
       </div>
     );
   }
-
-  const zoomPercentage = Math.round(scale * 100);
 
   return (
     <div
@@ -444,7 +378,7 @@ export default function PDFViewer({
           <div className="flex items-center gap-1.5">
             <button
               onClick={zoomOut}
-              disabled={scale <= MIN_SCALE || isLoading}
+              disabled={!canZoomOut || isLoading}
               className="cr-btn"
               style={{ padding: "6px 10px" }}
               title="Zoom out"
@@ -487,7 +421,7 @@ export default function PDFViewer({
 
             <button
               onClick={zoomIn}
-              disabled={scale >= MAX_SCALE || isLoading}
+              disabled={!canZoomIn || isLoading}
               className="cr-btn"
               style={{ padding: "6px 10px" }}
               title="Zoom in"
@@ -615,24 +549,54 @@ export default function PDFViewer({
 
       {/* Annotation Sidebar */}
       <div
-        className="w-full lg:w-96 h-64 lg:h-full shrink-0"
+        className="w-full lg:w-96 h-64 lg:h-full shrink-0 flex flex-col"
         style={{ borderLeft: "1px solid var(--border-subtle)" }}
       >
-        <AnnotationSidebar
-          annotations={annotations}
-          currentPage={currentPage}
-          activeAnnotationId={activeAnnotationId}
-          pendingSelection={pendingSelection}
-          onAnnotationClick={(id) => {
-            setActiveAnnotationId((prev) => (prev === id ? null : id));
-          }}
-          onAnnotationCreate={handleAnnotationCreate}
-          onAnnotationCancel={handleAnnotationCancel}
-          onAnnotationUpdate={handleAnnotationUpdate}
-          onAnnotationDelete={handleAnnotationDelete}
-          isAuthenticated={isAuthenticated}
-          onLoginClick={onLoginClick}
-        />
+        {annotationError && (
+          <div
+            className="px-3 py-2 text-sm flex items-center gap-2"
+            style={{
+              background: "var(--danger-dim)",
+              color: "var(--danger-text)",
+              borderBottom: "1px solid var(--border-subtle)",
+            }}
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            <span>{annotationError.message}</span>
+          </div>
+        )}
+        <div className="flex-1 overflow-hidden">
+          <AnnotationSidebar
+            annotations={annotations}
+            currentPage={currentPage}
+            activeAnnotationId={activeAnnotationId}
+            pendingSelection={pendingSelection}
+            onAnnotationClick={(id) => {
+              setActiveAnnotationId((prev) => (prev === id ? null : id));
+            }}
+            onAnnotationCreate={handleAnnotationCreate}
+            onAnnotationCancel={handleAnnotationCancel}
+            onAnnotationUpdate={handleAnnotationUpdate}
+            onAnnotationDelete={handleAnnotationDelete}
+            isAuthenticated={isAuthenticated}
+            onLoginClick={onLoginClick}
+            isFetchingAnnotations={isFetchingAnnotations}
+            isCreating={isCreating}
+            isUpdating={isUpdating}
+            isDeleting={isDeleting}
+          />
+        </div>
       </div>
     </div>
   );
