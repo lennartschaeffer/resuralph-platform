@@ -1,40 +1,24 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useUser } from "@/app/hooks/useUser";
 
 export default function Home() {
-  const router = useRouter();
   const { user, loading } = useUser();
-  const [pdfInput, setPdfInput] = useState("");
   const [mounted, setMounted] = useState(false);
+  const username =
+    user?.user_metadata?.full_name || user?.user_metadata?.name || "Guest";
 
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  function handleOpenPdf(e: React.FormEvent) {
-    e.preventDefault();
-    const url = pdfInput.trim();
-    if (!url) return;
-    const encoded = Buffer.from(url).toString("base64");
-    router.push(`/view/${encoded}`);
-  }
-
-  function handleOpenSample() {
-    const sampleUrl = `${window.location.origin}/sample.pdf`;
-    const encoded = Buffer.from(sampleUrl).toString("base64");
-    router.push(`/view/${encoded}`);
-  }
 
   return (
     <div
       className="min-h-screen flex flex-col"
       style={{ background: "var(--surface-0)" }}
     >
-      {/* ── Top Bar ── */}
       <header
         className={`flex items-center justify-between px-6 h-12 border-b ${mounted ? "animate-boot" : "opacity-0"}`}
         style={{
@@ -88,7 +72,7 @@ export default function Home() {
                   color: "var(--text-secondary)",
                 }}
               >
-                {user.email || "Authenticated"}
+                {username}
               </span>
             </div>
           ) : !loading ? (
@@ -103,7 +87,6 @@ export default function Home() {
         </div>
       </header>
 
-      {/* ── Main Content ── */}
       <main className="flex-1 flex items-center justify-center px-6">
         <div className="w-full max-w-xl">
           {/* System Identification Block */}
@@ -148,7 +131,6 @@ export default function Home() {
             </p>
           </div>
 
-          {/* ── Divider with label ── */}
           <div
             className={`flex items-center mb-6 ${mounted ? "animate-boot-delay-3" : "opacity-0"}`}
           >

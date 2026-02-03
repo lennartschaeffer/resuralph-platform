@@ -33,7 +33,6 @@ export default async function LoginPage({
           overflow: "hidden",
         }}
       >
-        {/* Header strip */}
         <div
           className="flex items-center gap-2 px-5 py-3"
           style={{
