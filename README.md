@@ -1,36 +1,34 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# **ResuRalph Platform**
 
-## Getting Started
+### The web-based annotation interface for ResuRalph
 
-First, run the development server:
+This is the frontend companion to [ResuRalph](https://github.com/lennartschaeffer/resuralph-python), a Discord bot I built for collaborative resume reviewing. While the bot provides the entry point for users to submit their resumes, this platform is where the actual reviewing happens.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## **How It Connects**
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+1. A user uploads their resume PDF via Discord using the `/upload` command
+2. The bot stores the PDF in S3 and creates a document record
+3. The bot returns a link to this platform where reviewers can view and annotate the resume
+4. Annotations are stored in PostgreSQL and can be fetched back into Discord via `/get_annotations`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## **Features**
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **PDF Viewing**: Renders resumes directly in the browser using react-pdf
+- **Inline Annotations**: Reviewers select text and leave comments with optional priority flags
+- **Discord OAuth**: Authenticated users can create, edit, and delete their annotations
+- **Public Access**: Anyone with a link can view the resume and existing annotations without signing in
 
-## Learn More
+## **Tech Stack**
 
-To learn more about Next.js, take a look at the following resources:
+- **Next.js 16** (App Router) with React 19 and TypeScript
+- **Tailwind CSS 4** for styling
+- **Supabase Auth** with Discord OAuth
+- **Prisma ORM** with PostgreSQL
+- **AWS S3** for PDF storage (shared with resuralph-python)
+- **react-pdf** for document rendering
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## **Architecture**
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The viewer lives at `/view/[documentId]`. When loaded, it fetches a signed S3 URL and renders the PDF. A text selection layer captures highlighted text and converts browser coordinates to PDF points for storage. An overlay layer does the reverse, rendering stored annotations at the correct positions regardless of zoom level.
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Annotations store their positions in PDF coordinate space, making them resolution-independent. The coordinate conversion happens in `TextSelectionLayer` (browser to PDF) and `AnnotationOverlay` (PDF to browser).
