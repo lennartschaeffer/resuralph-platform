@@ -40,7 +40,7 @@ interface PageProps {
 
 export default function ViewPage({ params }: PageProps) {
   const { documentId } = use(params);
-  const { user, loading: userLoading } = useUser();
+  const { user, loading: userLoading, error: authError } = useUser();
   const router = useRouter();
   const { pdfUrl, error, loading: pdfLoading } = usePdfUrl(documentId);
 
@@ -102,13 +102,47 @@ export default function ViewPage({ params }: PageProps) {
   }
 
   return (
-    <div className="h-screen" style={{ background: "var(--surface-0)" }}>
-      <PDFViewer
-        pdfUrl={pdfUrl}
-        documentId={documentId}
-        isAuthenticated={!userLoading && !!user}
-        onLoginClick={handleLoginClick}
-      />
+    <div className="h-screen flex flex-col" style={{ background: "var(--surface-0)" }}>
+      {authError && (
+        <div
+          className="px-4 py-2 flex items-center justify-center gap-2 shrink-0"
+          style={{
+            background: "var(--danger-dim)",
+            borderBottom: "1px solid var(--border-subtle)",
+          }}
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            style={{ color: "var(--danger-text)" }}
+          >
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          <span
+            className="text-xs"
+            style={{
+              fontFamily: "var(--font-mono)",
+              color: "var(--danger-text)",
+            }}
+          >
+            {authError}
+          </span>
+        </div>
+      )}
+      <div className="flex-1 min-h-0">
+        <PDFViewer
+          pdfUrl={pdfUrl}
+          documentId={documentId}
+          isAuthenticated={!userLoading && !!user}
+          onLoginClick={handleLoginClick}
+        />
+      </div>
     </div>
   );
 }

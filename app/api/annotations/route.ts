@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   if (!documentId) {
     return NextResponse.json(
       { error: "Missing documentId query parameter" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -19,7 +19,10 @@ export async function GET(request: NextRequest) {
     });
 
     if (!document) {
-      return NextResponse.json({ error: "Document not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Document not found" },
+        { status: 404 },
+      );
     }
 
     const annotations = await prisma.annotation.findMany({
@@ -29,41 +32,57 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ annotations });
   } catch (error) {
-    console.error(`Failed to fetch annotations for document ${documentId}:`, error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    console.error(
+      `Failed to fetch annotations for document ${documentId}:`,
+      error,
+    );
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }
 
-interface Rect {
-  x: unknown;
-  y: unknown;
-  width: unknown;
-  height: unknown;
-}
-
 function validatePositionData(
-  positionData: unknown
+  positionData: unknown,
 ): { valid: true } | { valid: false; message: string } {
   if (!positionData || typeof positionData !== "object") {
-    return { valid: false, message: "positionData is required and must be an object" };
+    return {
+      valid: false,
+      message: "positionData is required and must be an object",
+    };
   }
 
   const pd = positionData as Record<string, unknown>;
 
-  if (typeof pd.pageNumber !== "number" || !Number.isInteger(pd.pageNumber) || pd.pageNumber < 1) {
-    return { valid: false, message: "positionData.pageNumber must be a positive integer" };
+  if (
+    typeof pd.pageNumber !== "number" ||
+    !Number.isInteger(pd.pageNumber) ||
+    pd.pageNumber < 1
+  ) {
+    return {
+      valid: false,
+      message: "positionData.pageNumber must be a positive integer",
+    };
   }
 
   if (!Array.isArray(pd.rects) || pd.rects.length === 0) {
-    return { valid: false, message: "positionData.rects must be a non-empty array" };
+    return {
+      valid: false,
+      message: "positionData.rects must be a non-empty array",
+    };
   }
 
   for (const rect of pd.rects as Rect[]) {
     if (
-      typeof rect.x !== "number" || rect.x < 0 ||
-      typeof rect.y !== "number" || rect.y < 0 ||
-      typeof rect.width !== "number" || rect.width < 0 ||
-      typeof rect.height !== "number" || rect.height < 0
+      typeof rect.x !== "number" ||
+      rect.x < 0 ||
+      typeof rect.y !== "number" ||
+      rect.y < 0 ||
+      typeof rect.width !== "number" ||
+      rect.width < 0 ||
+      typeof rect.height !== "number" ||
+      rect.height < 0
     ) {
       return {
         valid: false,
@@ -92,7 +111,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const { documentId, selectedText, comment, positionData, isHighPriority } = body;
+  const { documentId, selectedText, comment, positionData, isHighPriority } =
+    body;
 
   // Validate required fields
   const errors: string[] = [];
@@ -101,11 +121,19 @@ export async function POST(request: NextRequest) {
     errors.push("documentId is required");
   }
 
-  if (!selectedText || typeof selectedText !== "string" || (selectedText as string).trim() === "") {
+  if (
+    !selectedText ||
+    typeof selectedText !== "string" ||
+    (selectedText as string).trim() === ""
+  ) {
     errors.push("selectedText is required and must be a non-empty string");
   }
 
-  if (!comment || typeof comment !== "string" || (comment as string).trim() === "") {
+  if (
+    !comment ||
+    typeof comment !== "string" ||
+    (comment as string).trim() === ""
+  ) {
     errors.push("comment is required and must be a non-empty string");
   }
 
@@ -120,8 +148,8 @@ export async function POST(request: NextRequest) {
 
   if (errors.length > 0) {
     return NextResponse.json(
-      { error: "Validation failed", details: errors },
-      { status: 400 }
+      { error: "Annotation creation invalid.", details: errors },
+      { status: 400 },
     );
   }
 
@@ -133,7 +161,10 @@ export async function POST(request: NextRequest) {
     });
 
     if (!document) {
-      return NextResponse.json({ error: "Document not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Document not found" },
+        { status: 404 },
+      );
     }
 
     const annotation = await prisma.annotation.create({
@@ -150,6 +181,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ annotation }, { status: 201 });
   } catch (error) {
     console.error("Failed to create annotation:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }

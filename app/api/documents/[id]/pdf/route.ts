@@ -19,7 +19,7 @@ export async function GET(
 
     if (!document) {
       return NextResponse.json(
-        { error: "Document not found" },
+        { error: "Document was not found in the database." },
         { status: 404 },
       );
     }
@@ -29,7 +29,7 @@ export async function GET(
       Key: document.s3Key,
     });
 
-    const url = await getSignedUrl(s3, command, { expiresIn: 900 }); // 15 minutes
+    const url = await getSignedUrl(s3, command, { expiresIn: 900 }); // 15 minute expiration
 
     return NextResponse.json({ url });
   } catch (error) {
