@@ -65,22 +65,22 @@ export default function AnnotationCreationForm({
     <div
       className="p-4 shrink-0 animate-slide-up"
       style={{
-        background: 'var(--surface-2)',
-        borderBottom: '1px solid var(--border-default)',
+        background: "var(--surface-2)",
+        borderBottom: "1px solid var(--border-default)",
       }}
     >
       {/* Header */}
       <div className="flex items-center gap-2 mb-3">
         <div
           className="cr-status-dot animate-pulse-glow"
-          style={{ background: 'var(--accent)' }}
+          style={{ background: "var(--accent)" }}
         />
         <span
           className="cr-badge"
           style={{
-            background: 'var(--accent-glow)',
-            color: 'var(--accent-bright)',
-            border: '1px solid var(--accent-dim)',
+            background: "var(--accent-glow)",
+            color: "var(--accent-bright)",
+            border: "1px solid var(--accent-dim)",
           }}
         >
           New Annotation
@@ -92,12 +92,15 @@ export default function AnnotationCreationForm({
         <div
           className="p-2.5 rounded"
           style={{
-            background: 'var(--surface-1)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: 'var(--radius-sm)',
+            background: "var(--surface-1)",
+            border: "1px solid var(--border-subtle)",
+            borderRadius: "var(--radius-sm)",
           }}
         >
-          <p className="text-[14px] italic" style={{ color: 'var(--text-tertiary)' }}>
+          <p
+            className="text-[14px] italic"
+            style={{ color: "var(--text-tertiary)" }}
+          >
             &ldquo;
             {shouldTruncate && !isTextExpanded
               ? displayText.slice(0, 120) + "..."
@@ -110,11 +113,11 @@ export default function AnnotationCreationForm({
               onClick={() => setIsTextExpanded(!isTextExpanded)}
               className="text-[13px] mt-1 transition-colors duration-150"
               style={{
-                fontFamily: 'var(--font-mono)',
-                color: 'var(--accent-bright)',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
+                fontFamily: "var(--font-mono)",
+                color: "var(--accent-bright)",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
                 padding: 0,
               }}
             >
@@ -129,19 +132,45 @@ export default function AnnotationCreationForm({
             ref={textareaRef}
             value={comment}
             onChange={(e) => {
-              setComment(e.target.value);
-              if (error) setError(null);
+              const value = e.target.value;
+              if (value.length <= 500) {
+                setComment(value);
+                if (error) setError(null);
+              }
             }}
             placeholder="Add your comment..."
             rows={3}
+            maxLength={500}
             className="cr-input w-full resize-none"
-            style={{ fontSize: '14px', lineHeight: '1.5' }}
+            style={{ fontSize: "14px", lineHeight: "1.5" }}
           />
-          {error && (
-            <p className="text-[13px] mt-1" style={{ color: 'var(--danger-text)' }}>
-              {error}
-            </p>
-          )}
+          <div className="flex items-center justify-between mt-1">
+            {error ? (
+              <p
+                className="text-[13px]"
+                style={{ color: "var(--danger-text)" }}
+              >
+                {error}
+              </p>
+            ) : (
+              <span />
+            )}
+            <span
+              className="text-[12px]"
+              style={{
+                fontFamily: "var(--font-mono)",
+                color:
+                  comment.length >= 500
+                    ? "var(--danger-text)"
+                    : comment.length >= 450
+                      ? "var(--warning-text, #f59e0b)"
+                      : "var(--text-tertiary)",
+                transition: "color 0.15s ease",
+              }}
+            >
+              {comment.length}/500
+            </span>
+          </div>
         </div>
 
         {/* Priority toggle */}
@@ -151,14 +180,16 @@ export default function AnnotationCreationForm({
             checked={isHighPriority}
             onChange={(e) => setIsHighPriority(e.target.checked)}
             className="w-4 h-4 rounded accent-red-500"
-            style={{ accentColor: 'var(--danger)' }}
+            style={{ accentColor: "var(--danger)" }}
           />
           <span
             className="text-[14px] font-medium"
             style={{
-              fontFamily: 'var(--font-mono)',
-              color: isHighPriority ? 'var(--danger-text)' : 'var(--text-tertiary)',
-              transition: 'color 0.15s ease',
+              fontFamily: "var(--font-mono)",
+              color: isHighPriority
+                ? "var(--danger-text)"
+                : "var(--text-tertiary)",
+              transition: "color 0.15s ease",
             }}
           >
             High Priority
@@ -172,17 +203,21 @@ export default function AnnotationCreationForm({
             onClick={onCancel}
             disabled={isLoading}
             className="cr-btn"
-            style={{ fontSize: '13px', padding: '6px 12px' }}
+            style={{ fontSize: "13px", padding: "6px 12px" }}
           >
             Cancel
           </button>
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || !comment}
             className="cr-btn cr-btn-accent"
-            style={{ fontSize: '13px', padding: '6px 12px', opacity: isLoading ? 0.7 : 1 }}
+            style={{
+              fontSize: "13px",
+              padding: "6px 12px",
+              opacity: isLoading ? 0.7 : 1,
+            }}
           >
-            {isLoading ? 'Saving...' : 'Add Annotation'}
+            {isLoading ? "Saving..." : "Add Annotation"}
           </button>
         </div>
       </form>

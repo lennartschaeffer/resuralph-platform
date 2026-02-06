@@ -137,6 +137,11 @@ export async function POST(request: NextRequest) {
     errors.push("comment is required and must be a non-empty string");
   }
 
+  //limit comment length to 500 characters
+  if ((comment as string).length > 500) {
+    errors.push("comment must not exceed 500 characters");
+  }
+
   const positionResult = validatePositionData(positionData);
   if (!positionResult.valid) {
     errors.push(positionResult.message);
