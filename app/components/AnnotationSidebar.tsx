@@ -381,7 +381,7 @@ export default function AnnotationSidebar({
                     </div>
                   ) : (
                     <p
-                      className="text-sm line-clamp-3 leading-relaxed"
+                      className="text-sm leading-relaxed"
                       style={{ color: "var(--text-secondary)" }}
                     >
                       {annotation.comment}
