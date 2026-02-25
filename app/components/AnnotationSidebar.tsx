@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Annotation, AnnotationRect } from "@/app/types/annotation";
 import AnnotationCreationForm from "./AnnotationCreationForm";
+import { useUser } from "../hooks/useUser";
 
 interface AnnotationSidebarProps {
   annotations: Annotation[];
@@ -54,6 +55,9 @@ export default function AnnotationSidebar({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editComment, setEditComment] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const { user } = useUser();
+  const username =
+    user?.user_metadata?.full_name || user?.user_metadata?.name || "Guest";
 
   const sortedAnnotations = [...annotations].sort((a, b) => {
     if (a.positionData.pageNumber !== b.positionData.pageNumber) {
@@ -319,7 +323,7 @@ export default function AnnotationSidebar({
                         color: "var(--text-tertiary)",
                       }}
                     >
-                      P{annotation.positionData.pageNumber}
+                      {username}
                     </span>
                     {annotation.isHighPriority && (
                       <span
