@@ -63,10 +63,12 @@ export default function AnnotationSidebar({
     if (a.positionData.pageNumber !== b.positionData.pageNumber) {
       return a.positionData.pageNumber - b.positionData.pageNumber;
     }
-    const aY = a.positionData.rects[0]?.y ?? 0;
-    const bY = b.positionData.rects[0]?.y ?? 0;
-    return aY - bY;
+    const aYSum = a.positionData.rects.reduce((sum, rect) => sum + rect.y, 0);
+    const bYSum = b.positionData.rects.reduce((sum, rect) => sum + rect.y, 0);
+    return aYSum - bYSum;
   });
+
+  console.log(sortedAnnotations);
 
   function startEditing(annotation: Annotation) {
     setEditingId(annotation.id);
@@ -316,15 +318,6 @@ export default function AnnotationSidebar({
                 >
                   {/* Top row: page + priority */}
                   <div className="flex items-center gap-2 mb-1.5">
-                    <span
-                      className="cr-badge"
-                      style={{
-                        background: "var(--surface-4)",
-                        color: "var(--text-tertiary)",
-                      }}
-                    >
-                      {username}
-                    </span>
                     {annotation.isHighPriority && (
                       <span
                         className="cr-badge"
