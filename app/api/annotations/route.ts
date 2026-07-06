@@ -180,6 +180,11 @@ export async function POST(request: NextRequest) {
         positionData: positionData as object,
         isHighPriority: (isHighPriority as boolean) ?? false,
         creatorId: user.id,
+        creatorUsername:
+          user.user_metadata?.full_name ??
+          user.user_metadata?.name ??
+          user.user_metadata?.user_name ??
+          null,
       },
     });
 

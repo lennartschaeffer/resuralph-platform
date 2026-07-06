@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Annotation, AnnotationRect } from "@/app/types/annotation";
 import AnnotationCreationForm from "./AnnotationCreationForm";
-import { useUser } from "../hooks/useUser";
 
 interface AnnotationSidebarProps {
   annotations: Annotation[];
@@ -52,12 +51,10 @@ export default function AnnotationSidebar({
   isUpdating = false,
   isDeleting: isDeletingAnnotation = false,
 }: AnnotationSidebarProps) {
+  const DEFAULT_USERNAME = "Anonymous User";
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editComment, setEditComment] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const { user } = useUser();
-  const username =
-    user?.user_metadata?.full_name || user?.user_metadata?.name || "Guest";
 
   const sortedAnnotations = [...annotations].sort((a, b) => {
     if (a.positionData.pageNumber !== b.positionData.pageNumber) {
@@ -67,8 +64,6 @@ export default function AnnotationSidebar({
     const bYSum = b.positionData.rects.reduce((sum, rect) => sum + rect.y, 0);
     return aYSum - bYSum;
   });
-
-  console.log(sortedAnnotations);
 
   function startEditing(annotation: Annotation) {
     setEditingId(annotation.id);
@@ -316,8 +311,34 @@ export default function AnnotationSidebar({
                     }
                   }}
                 >
-                  {/* Top row: page + priority */}
+                  {/* Top row: creator + priority */}
                   <div className="flex items-center gap-2 mb-1.5">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <div
+                        className="flex items-center justify-center shrink-0"
+                        style={{
+                          width: "18px",
+                          height: "18px",
+                          borderRadius: "50%",
+                          background: "var(--surface-4)",
+                          color: "var(--text-tertiary)",
+                          fontSize: "10px",
+                          fontWeight: 600,
+                          fontFamily: "var(--font-mono)",
+                        }}
+                      >
+                        {(annotation.creatorUsername ?? DEFAULT_USERNAME)
+                          .charAt(0)
+                          .toUpperCase()}
+                      </div>
+                      <span
+                        className="text-[13px] font-medium truncate"
+                        style={{ color: "var(--text-secondary)" }}
+                      >
+                        {annotation.creatorUsername ?? DEFAULT_USERNAME}
+                      </span>
+                    </div>
+
                     {annotation.isHighPriority && (
                       <span
                         className="cr-badge"

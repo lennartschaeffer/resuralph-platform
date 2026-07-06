@@ -37,6 +37,7 @@ model Annotation {
   positionData   Json
   isHighPriority Boolean  @default(false)
   creatorId      String
+  creatorUsername String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 

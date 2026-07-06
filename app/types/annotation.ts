@@ -18,6 +18,7 @@ export interface Annotation {
   positionData: AnnotationPosition;
   isHighPriority: boolean;
   creatorId: string;
+  creatorUsername: string | null;
   createdAt: string;
   updatedAt: string;
 }
